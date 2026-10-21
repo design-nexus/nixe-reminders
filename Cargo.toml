@@ -1,0 +1,13 @@
+[workspace]
+resolver = "3"
+members = ["apps/reminders", "apps/remindersd", "crates/nixe-reminders-core"]
+
+[workspace.package]
+edition = "2024"
+license = "MIT"
+authors = ["Ken Smith"]
+repository = "https://github.com/design-nexus/nixe-reminders"
+
+[profile.release]
+lto = "thin"
+strip = true

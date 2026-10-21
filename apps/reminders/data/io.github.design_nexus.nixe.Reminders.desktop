@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Reminders
+GenericName=Task List
+Comment=Your task lists from every account
+Exec=nixe-reminders
+Icon=io.github.design_nexus.nixe.Reminders
+Terminal=false
+Categories=Office;ProjectManagement;GTK;
+Keywords=reminders;tasks;todo;to-do;list;checklist;
+StartupNotify=true
+StartupWMClass=io.github.design_nexus.nixe.Reminders

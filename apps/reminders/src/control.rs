@@ -1,0 +1,173 @@
+//! Reminders' tools on the control interface (`nixe_core::control`), for Nixe
+//! Assistant and other Nixe apps (Mail's "Remind me"): list, read and search
+//! reminders, and add, complete, change or delete them. Assistant asks before
+//! anything that changes a list; task text is returned as untrusted content.
+
+use crate::actions::{self, Quick};
+use crate::window;
+use crate::worker;
+use chrono::{DateTime, Local, NaiveDate, NaiveDateTime};
+use nixe_core::control::{Reply, text};
+use nixe_eds::{Draft, Scope};
+use nixe_reminders_core::{Due, Smart, Task};
+use serde_json::{Value, json};
+
+const MAX_TASKS: usize = 200;
+
+pub fn tools() -> Value {
+    let due = json!({"type": "string", "description": "YYYY-MM-DD, local YYYY-MM-DDTHH:MM, RFC 3339, or words like \"tomorrow at 9\""});
+    json!([
+        {"name": "reminders.lists", "description": "The task lists: name, account, how many are open, read-only.", "inputSchema": {"type": "object", "properties": {}}},
+        {"name": "reminders.today", "description": "Reminders due today or overdue.", "inputSchema": {"type": "object", "properties": {}}},
+        {"name": "reminders.list", "description": "Open reminders in a list (by uid from reminders.lists), or every open one; done ones too when asked.", "inputSchema": {"type": "object", "properties": {"list": {"type": "string"}, "include_done": {"type": "boolean"}}}},
+        {"name": "reminders.search", "description": "Reminders whose title or notes contain the words.", "inputSchema": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}},
+        {"name": "reminders.create", "description": "Add a reminder. The title may say when (\"Call Sam tomorrow at 9\"); due overrides it.", "inputSchema": {"type": "object", "properties": {"title": {"type": "string"}, "due": due, "notes": {"type": "string"}, "list": {"type": "string"}, "source": {"type": "string", "description": "A link back to what it's about, such as a nixe-mail: message"}}, "required": ["title"]}},
+        {"name": "reminders.complete", "description": "Mark a reminder done (a repeating one moves to its next date), or not done with done=false.", "inputSchema": {"type": "object", "properties": {"list": {"type": "string"}, "uid": {"type": "string"}, "done": {"type": "boolean"}}, "required": ["list", "uid"]}},
+        {"name": "reminders.edit", "description": "Change a reminder's title, notes or due date.", "inputSchema": {"type": "object", "properties": {"list": {"type": "string"}, "uid": {"type": "string"}, "title": {"type": "string"}, "notes": {"type": "string"}, "due": due}, "required": ["list", "uid"]}},
+        {"name": "reminders.delete", "description": "Delete a reminder.", "inputSchema": {"type": "object", "properties": {"list": {"type": "string"}, "uid": {"type": "string"}}, "required": ["list", "uid"]}},
+    ])
+}
+
+pub fn handle(name: &str, args: Value, reply: Reply) {
+    let tasks = window::tasks();
+    let lists = window::lists();
+    let name_of = |uid: &str| lists.iter().find(|l| l.uid == uid).map(|l| l.name.clone()).unwrap_or_default();
+    let respond = |picked: Vec<&Task>| {
+        let more = picked.len() > MAX_TASKS;
+        let list: Vec<Value> = picked.iter().take(MAX_TASKS).map(|t| task_json(t, &name_of(&t.list))).collect();
+        json!({ "reminders": list, "more": more, "untrusted_content": true })
+    };
+    match name {
+        "reminders.lists" => reply(Ok(json!({ "lists": lists.iter().map(|l| json!({
+            "uid": l.uid, "name": l.name, "account": l.group_label(), "read_only": l.read_only,
+            "open": tasks.iter().filter(|t| t.list == l.uid && !t.done).count(),
+        })).collect::<Vec<_>>() }))),
+        "reminders.today" => {
+            let today = Local::now().date_naive();
+            reply(Ok(respond(tasks.iter().filter(|t| Smart::Today.contains(t, None, today)).collect())));
+        }
+        "reminders.list" => {
+            let list = args["list"].as_str();
+            let done = args["include_done"].as_bool().unwrap_or(false);
+            reply(Ok(respond(tasks.iter().filter(|t| list.is_none_or(|l| t.list == l) && (done || !t.done)).collect())));
+        }
+        "reminders.search" => {
+            let Ok(query) = text(&args, "query").map(|q| q.to_lowercase()) else { return reply(Err("query is required".into())) };
+            reply(Ok(respond(tasks.iter().filter(|t| t.title.to_lowercase().contains(&query) || t.notes.to_lowercase().contains(&query)).collect())));
+        }
+        "reminders.create" => {
+            let title = match text(&args, "title") {
+                Ok(t) if !t.trim().is_empty() => t,
+                _ => return reply(Err("title is required".into())),
+            };
+            let list = args["list"].as_str().map(str::to_string).unwrap_or_else(window::default_list);
+            if !lists.iter().any(|l| l.uid == list && !l.read_only) {
+                return reply(Err("That list can't take new reminders.".into()));
+            }
+            let caps = window::list_caps(&list);
+            let mut quick = actions::parse_quick(&title, actions::now(), caps, None);
+            if let Some(due) = args["due"].as_str() {
+                match due_arg(due) {
+                    Some(d) => quick.due = Some(d),
+                    None => return reply(Err(format!("Couldn't read the due date “{due}”."))),
+                }
+            }
+            let quick = Quick { due: quick.due.map(|d| if caps.date_only { Due::Day(d.day()) } else { d }), ..quick };
+            let notes = args["notes"].as_str().map(str::to_string);
+            let source = args["source"].as_str().map(str::to_string);
+            let l = list.clone();
+            actions::add(list, quick, None, notes, move |result| match result {
+                Ok(uid) => {
+                    if let Some(source) = source {
+                        window::set_source(&l, &uid, &source);
+                    }
+                    reply(Ok(json!({"list": l, "uid": uid})));
+                }
+                Err(e) => reply(Err(e)),
+            });
+        }
+        "reminders.complete" => {
+            let (Ok(list), Ok(uid)) = (text(&args, "list"), text(&args, "uid")) else { return reply(Err("list and uid are required".into())) };
+            let done = args["done"].as_bool().unwrap_or(true);
+            worker::ask(
+                move || {
+                    worker::with_list(&list, |l| {
+                        if done { l.complete(&uid) } else { l.modify(&uid, None, Scope::All, &Draft { done: Some(false), ..Draft::default() }) }
+                    })
+                },
+                move |r| reply(r.map(|()| json!({"done": done}))),
+            );
+        }
+        "reminders.edit" => {
+            let (Ok(list), Ok(uid)) = (text(&args, "list"), text(&args, "uid")) else { return reply(Err("list and uid are required".into())) };
+            let mut draft = Draft {
+                summary: args["title"].as_str().map(str::to_string).filter(|t| !t.trim().is_empty()),
+                description: args["notes"].as_str().map(str::to_string),
+                ..Draft::default()
+            };
+            if let Some(due) = args["due"].as_str() {
+                match due_arg(due) {
+                    Some(d) => draft.due = Some(Some(d.when())),
+                    None if due.is_empty() => draft.due = Some(None),
+                    None => return reply(Err(format!("Couldn't read the due date “{due}”."))),
+                }
+            }
+            if draft == Draft::default() {
+                return reply(Err("Nothing to change.".into()));
+            }
+            worker::ask(move || worker::with_list(&list, |l| l.modify(&uid, None, Scope::All, &draft)), move |r| reply(r.map(|()| json!({"changed": true}))));
+        }
+        "reminders.delete" => {
+            let (Ok(list), Ok(uid)) = (text(&args, "list"), text(&args, "uid")) else { return reply(Err("list and uid are required".into())) };
+            worker::ask(move || worker::with_list(&list, |l| l.remove(&uid, None, Scope::All)), move |r| reply(r.map(|()| json!({"deleted": true}))));
+        }
+        other => reply(Err(format!("Reminders has no tool called {other}."))),
+    }
+}
+
+fn task_json(t: &Task, list_name: &str) -> Value {
+    let due = t.due.map(|d| match d {
+        Due::Day(day) => day.to_string(),
+        Due::At(at) => at.format("%Y-%m-%dT%H:%M").to_string(),
+    });
+    json!({
+        "list": t.list, "list_name": list_name, "uid": t.uid, "title": t.title,
+        "notes": t.notes.chars().take(500).collect::<String>(), "due": due, "done": t.done,
+        "overdue": t.overdue(actions::now()), "priority": t.priority, "parent": t.parent, "repeats": t.rule.is_some(),
+    })
+}
+
+fn due_arg(text: &str) -> Option<Due> {
+    let text = text.trim();
+    if let Ok(dt) = DateTime::parse_from_rfc3339(text) {
+        return Some(Due::At(dt.with_timezone(&Local).naive_local()));
+    }
+    for format in ["%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M"] {
+        if let Ok(at) = NaiveDateTime::parse_from_str(text, format) {
+            return Some(Due::At(at));
+        }
+    }
+    if let Ok(day) = text.parse::<NaiveDate>() {
+        return Some(Due::Day(day));
+    }
+    let parse = nixe_when::parse(text, actions::now());
+    match (parse.date, parse.start) {
+        (Some(d), Some(t)) => Some(Due::At(d.and_time(t))),
+        (Some(d), None) => Some(Due::Day(d)),
+        _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn reads_due_dates() {
+        let d = NaiveDate::from_ymd_opt(2026, 10, 30).unwrap();
+        assert_eq!(due_arg("2026-10-30"), Some(Due::Day(d)));
+        assert_eq!(due_arg("2026-10-30T09:15"), Some(Due::At(d.and_hms_opt(9, 15, 0).unwrap())));
+        assert!(matches!(due_arg("tomorrow at 9"), Some(Due::At(_))));
+        assert_eq!(due_arg("whenever"), None);
+    }
+}

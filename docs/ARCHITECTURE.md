@@ -7,8 +7,8 @@ flowchart LR
   Eds --> Reg[evolution-source-registry]
   UI --> When[nixe-when]
   UI --> Side[(reminders.sqlite)]
-  Remd --> Today[(today.sqlite)]
-  Glimpse[reminders-glimpse] -.read only.-> Today
+  Remd --> Tasks[(tasks.sqlite)]
+  Glimpse[reminders-glimpse] -.read only.-> Tasks
   UI -->|Control| Assistant
   Mail[Nixe Mail] -->|Control reminders.create| UI
 ```
@@ -43,8 +43,9 @@ overdue), Scheduled (has a due date), Flagged (sidecar), All (not completed), Co
 
 ## `nixe-remindersd`
 
-A GTK-free user service: `EReminderWatcher` on task lists, notifications with Complete
-and Snooze, and `today.sqlite` for Glimpse.
+A GTK-free user service: `EReminderWatcher` (task lists only; calendar alerts are Nixe
+Calendar's), notifications with Complete, Snooze and Dismiss, and `tasks.sqlite` (every
+open task) for Glimpse.
 
 ## Control tools
 

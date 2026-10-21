@@ -1,0 +1,24 @@
+{
+  "application": "reminders",
+  "directory": "reminders",
+  "packages": [
+    "nixe-reminders",
+    "nixe-remindersd"
+  ],
+  "manifest": "Cargo.toml",
+  "prepare": [],
+  "binaries": [],
+  "test_commands": [
+    [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "nixe-reminders-core",
+      "-p",
+      "nixe-reminders",
+      "-p",
+      "nixe-remindersd"
+    ]
+  ]
+}

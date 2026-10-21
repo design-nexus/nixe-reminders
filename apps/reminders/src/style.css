@@ -1,0 +1,145 @@
+/* Reminders: only what the shared base.css doesn't already style. */
+
+.toolbar {
+  background: transparent;
+  min-height: 46px;
+  padding: 0 12px 0 20px;
+  border-bottom: 1px solid @hairline;
+}
+
+.toolbar-title {
+  font-weight: 600;
+  font-size: 1.05em;
+  color: @theme_text;
+}
+
+.banners {
+  padding: 12px 16px;
+  border-bottom: 1px solid @hairline;
+}
+
+.quick-box {
+  padding: 14px 24px 8px 24px;
+}
+
+.quick-note {
+  color: @theme_dim_text;
+  font-size: 0.86em;
+  padding-left: 4px;
+}
+
+.task-list {
+  padding: 4px 24px 36px 24px;
+}
+
+.task-row {
+  padding: 10px 12px;
+  border-radius: 6px;
+  border-bottom: 1px solid @divider;
+}
+
+.task-row:hover {
+  background: @row_hover;
+}
+
+.task-row.selected {
+  background: @nav_active;
+}
+
+.task-title {
+  font-weight: 500;
+}
+
+.task-title.done,
+.done {
+  text-decoration: line-through;
+  color: @theme_dim_text;
+}
+
+.task-due {
+  color: @theme_dim_text;
+  font-size: 0.88em;
+}
+
+.task-due.overdue {
+  color: @theme_danger;
+  font-weight: 600;
+}
+
+.task-row .dim {
+  font-size: 0.88em;
+}
+
+.priority-high {
+  color: @theme_danger;
+  font-weight: 700;
+}
+
+.priority-medium {
+  color: @theme_accent;
+  font-weight: 700;
+}
+
+.priority-low {
+  color: @theme_dim_text;
+  font-weight: 700;
+}
+
+.flag {
+  color: @theme_accent;
+}
+
+.completed-head {
+  margin: 22px 0 6px 12px;
+}
+
+.detail-scroll {
+  background: @theme_surface;
+  border-left: 1px solid @hairline;
+}
+
+.detail-panel {
+  padding: 16px;
+}
+
+.detail-title {
+  font-weight: 600;
+  font-size: 1.05em;
+}
+
+.detail-notes-box {
+  border: 1px solid @hairline;
+  border-radius: 6px;
+}
+
+.detail-notes {
+  background: transparent;
+  padding: 6px;
+}
+
+.detail-heading {
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: @theme_dim_text;
+  margin-top: 10px;
+}
+
+.detail-label {
+  color: @theme_dim_text;
+}
+
+.detail-row {
+  min-height: 34px;
+}
+
+.settings-navigation .nav-group-add {
+  min-height: 22px;
+  min-width: 22px;
+  padding: 0;
+  margin-right: 4px;
+}
+
+button.destructive {
+  color: @theme_danger;
+}
