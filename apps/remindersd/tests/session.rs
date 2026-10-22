@@ -54,7 +54,13 @@ fn due_task_alert_can_be_completed_from_the_notification() {
         })
         .build()
         .unwrap();
-    let _name = gio::bus_own_name_on_connection(&conn, "org.freedesktop.Notifications", gio::BusNameOwnerFlags::NONE, |_, _| {}, |_, _| {});
+    let _name = gio::bus_own_name_on_connection(
+        &conn,
+        "org.freedesktop.Notifications",
+        gio::BusNameOwnerFlags::NONE,
+        |_, _| {},
+        |_, _| {},
+    );
 
     let registry = Registry::connect().unwrap();
     let list = Calendar::open(&registry, "system-task-list", Kind::TaskList, None).unwrap();
@@ -79,8 +85,14 @@ fn due_task_alert_can_be_completed_from_the_notification() {
         assert!(body.contains("About the trip"), "{body}");
         assert!(actions.contains(&"complete".to_string()));
     }
-    conn.emit_signal(None, "/org/freedesktop/Notifications", "org.freedesktop.Notifications", "ActionInvoked", Some(&(7u32, "complete").to_variant()))
-        .unwrap();
+    conn.emit_signal(
+        None,
+        "/org/freedesktop/Notifications",
+        "org.freedesktop.Notifications",
+        "ActionInvoked",
+        Some(&(7u32, "complete").to_variant()),
+    )
+    .unwrap();
     let done = pump(Instant::now() + Duration::from_secs(15), || list.get(&uid, None).is_ok_and(|t| t.is_done()));
     let tasks_file = std::path::PathBuf::from(std::env::var("XDG_DATA_HOME").unwrap()).join("nixe-reminders/tasks.sqlite");
     let wrote = tasks_file.exists();

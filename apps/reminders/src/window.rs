@@ -299,7 +299,15 @@ fn rebuild_page() {
     let Some(ui) = ui() else { return };
     let (rows, entries, selected, title_text, quick, detail_box, scroll) = {
         let u = ui.borrow();
-        (u.rows.clone(), page_tasks(&u), u.selected.clone(), page_title(&u), u.quick.clone(), u.detail.clone(), u.detail_scroll.clone())
+        (
+            u.rows.clone(),
+            page_tasks(&u),
+            u.selected.clone(),
+            page_title(&u),
+            u.quick.clone(),
+            u.detail.clone(),
+            u.detail_scroll.clone(),
+        )
     };
     ui.borrow().title.set_text(&title_text);
     chrome::set_title(&ui.borrow().window, "Reminders", &title_text);
@@ -344,7 +352,8 @@ fn rebuild_page() {
             rows.append(&label);
             done_header = true;
         }
-        let list_name = if matches!(page, Page::Smart(_)) { lists.iter().find(|l| l.uid == task.list).map(|l| l.name.clone()) } else { None };
+        let list_name =
+            if matches!(page, Page::Smart(_)) { lists.iter().find(|l| l.uid == task.list).map(|l| l.name.clone()) } else { None };
         let color = lists.iter().find(|l| l.uid == task.list).and_then(|l| l.color.clone());
         let row = task_row(task, depth, meta.get(&task.key()), list_name, color, selected.as_ref() == Some(&task.key()), now);
         rows.append(&row);
@@ -359,7 +368,11 @@ fn rebuild_page() {
             let typing = gtk::prelude::GtkWindowExt::focus(&ui.borrow().window).is_some_and(|f| f.is_ancestor(&detail_box));
             let changed = ui.borrow().shown_detail.as_ref() != Some(&task);
             if changed && !typing {
-                let subtasks: Vec<Task> = tasks.iter().filter(|t| t.parent.as_deref() == Some(task.uid.as_str()) && t.list == task.list).cloned().collect();
+                let subtasks: Vec<Task> = tasks
+                    .iter()
+                    .filter(|t| t.parent.as_deref() == Some(task.uid.as_str()) && t.list == task.list)
+                    .cloned()
+                    .collect();
                 detail::fill(&detail_box, &task, meta.get(&task.key()).unwrap_or(&Meta::default()), &subtasks);
                 ui.borrow_mut().shown_detail = Some(task);
             }
@@ -372,7 +385,15 @@ fn rebuild_page() {
     }
 }
 
-fn task_row(task: &Task, depth: usize, meta: Option<&Meta>, list_name: Option<String>, color: Option<String>, selected: bool, now: chrono::NaiveDateTime) -> gtk::Box {
+fn task_row(
+    task: &Task,
+    depth: usize,
+    meta: Option<&Meta>,
+    list_name: Option<String>,
+    color: Option<String>,
+    selected: bool,
+    now: chrono::NaiveDateTime,
+) -> gtk::Box {
     let row = gtk::Box::new(gtk::Orientation::Horizontal, 12);
     row.add_css_class("task-row");
     if selected {
@@ -497,6 +518,29 @@ pub fn set_source(list: &str, uid: &str, source: &str) {
     ui.borrow_mut().meta.insert(key, meta);
 }
 
+/// The task lists have loaded (`--add` waits for this).
+pub fn ready() -> bool {
+    ui().is_some_and(|u| u.borrow().loaded && !u.borrow().lists.is_empty())
+}
+
+/// Adds a reminder from words ("Call Sam tomorrow at 9") to the list new
+/// reminders go to, whatever page is showing (`--add`, from Glimpse).
+pub fn add_text(text: &str) {
+    let list = default_list();
+    if list.is_empty() {
+        toast("There's no list to add reminders to. Add an account in Settings → Online Accounts.");
+        return;
+    }
+    let quick = actions::parse_quick(text, actions::now(), list_caps(&list), None);
+    let dropped = quick.dropped.clone();
+    let list_name = lists().iter().find(|l| l.uid == list).map(|l| l.name.clone()).unwrap_or_default();
+    actions::add(list, quick, None, None, move |result| match result {
+        Ok(_) if dropped.is_empty() => toast(&format!("Added to {list_name}.")),
+        Ok(_) => toast(&format!("Added to {list_name}, without a {} (the list can't keep one).", dropped.join(" or "))),
+        Err(err) => toast(&err),
+    });
+}
+
 fn add_from_quick(text: &str) {
     let Some(ui) = ui() else { return };
     let page = ui.borrow().page.clone();
@@ -614,7 +658,8 @@ fn refresh_status() {
 
 pub fn open_online_accounts() {
     let settings = nixe_accounts::find_bin("nixe-settings");
-    let started = settings.is_some_and(|bin| std::process::Command::new(bin).args(["--section", "online-accounts"]).spawn().is_ok());
+    let started =
+        settings.is_some_and(|bin| std::process::Command::new(bin).args(["--section", "online-accounts"]).spawn().is_ok());
     if !started && nixe_accounts::open_management().is_err() {
         toast("Install Nixe Settings or gnome-online-accounts-gtk to add accounts.");
     }
@@ -799,13 +844,19 @@ fn rebuild_nav() {
 // ---------- Building ----------
 
 fn build(app: &gtk::Application) {
-    let window = gtk::ApplicationWindow::builder().application(app).title("Reminders").default_width(1120).default_height(800).build();
+    let window =
+        gtk::ApplicationWindow::builder().application(app).title("Reminders").default_width(1120).default_height(800).build();
     window.add_css_class("reminders-window");
     window.set_titlebar(Some(&gtk::Box::new(gtk::Orientation::Horizontal, 0)));
     window.set_icon_name(Some("io.github.design_nexus.nixe.Reminders"));
     nixe_ui::keys::install(
         &window,
-        nixe_ui::keys::Common { settings: Some(settings_dialog::open), shortcuts: Some(show_shortcuts), close: true, ..Default::default() },
+        nixe_ui::keys::Common {
+            settings: Some(settings_dialog::open),
+            shortcuts: Some(show_shortcuts),
+            close: true,
+            ..Default::default()
+        },
     );
 
     let nav = gtk::Box::new(gtk::Orientation::Vertical, 0);
@@ -1130,7 +1181,11 @@ fn install_keys(window: &gtk::ApplicationWindow, search: &gtk::SearchEntry, quic
             }
             gdk::Key::Delete => {
                 if let Some(t) = selected_task() {
-                    let subs: Vec<String> = tasks().iter().filter(|s| s.parent.as_deref() == Some(t.uid.as_str()) && s.list == t.list).map(|s| s.uid.clone()).collect();
+                    let subs: Vec<String> = tasks()
+                        .iter()
+                        .filter(|s| s.parent.as_deref() == Some(t.uid.as_str()) && s.list == t.list)
+                        .map(|s| s.uid.clone())
+                        .collect();
                     select(None);
                     actions::delete(&t, subs);
                 }

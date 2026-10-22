@@ -142,7 +142,9 @@ pub fn fill(panel: &gtk::Box, task: &Task, meta: &Meta, subtasks: &[Task]) {
         let (t, p, time_field) = (task.clone(), pop.clone(), time.clone());
         calendar.connect_day_selected(move |cal| {
             let picked = cal.date();
-            let Some(day) = NaiveDate::from_ymd_opt(picked.year(), picked.month() as u32, picked.day_of_month() as u32) else { return };
+            let Some(day) = NaiveDate::from_ymd_opt(picked.year(), picked.month() as u32, picked.day_of_month() as u32) else {
+                return;
+            };
             let due = match parse_time(&time_field.text()).filter(|_| !caps.date_only) {
                 Some(at) => Due::At(day.and_time(at)),
                 None => Due::Day(day),
@@ -201,7 +203,13 @@ pub fn fill(panel: &gtk::Box, task: &Task, meta: &Meta, subtasks: &[Task]) {
         let mut options = vec![("none".to_string(), "No alert".to_string())];
         if date_only {
             for hour in [8i64, 9, 12, 17, 20] {
-                options.push(((-hour * 60).to_string(), format!("On the day at {}", actions::time_text(NaiveTime::from_hms_opt(hour as u32, 0, 0).unwrap_or_default()))));
+                options.push((
+                    (-hour * 60).to_string(),
+                    format!(
+                        "On the day at {}",
+                        actions::time_text(NaiveTime::from_hms_opt(hour as u32, 0, 0).unwrap_or_default())
+                    ),
+                ));
             }
         } else {
             for (m, l) in [(0i64, "At the due time"), (10, "10 min before"), (60, "1 hour before"), (1440, "1 day before")] {

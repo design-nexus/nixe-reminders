@@ -80,13 +80,17 @@ impl Notifier {
 
     pub fn show(&self, reminder: Reminder) {
         let Some(conn) = &self.conn else { return };
-        let summary = if reminder.item.summary.trim().is_empty() { "Untitled".to_string() } else { reminder.item.summary.clone() };
+        let summary =
+            if reminder.item.summary.trim().is_empty() { "Untitled".to_string() } else { reminder.item.summary.clone() };
         let body = body(&reminder, Local::now().timestamp());
-        let actions: Vec<String> = ["default", "Open", "complete", "Complete", "snooze", "Snooze 10 min", "dismiss", "Dismiss"].iter().map(|s| s.to_string()).collect();
+        let actions: Vec<String> = ["default", "Open", "complete", "Complete", "snooze", "Snooze 10 min", "dismiss", "Dismiss"]
+            .iter()
+            .map(|s| s.to_string())
+            .collect();
         let mut hints: HashMap<String, glib::Variant> = HashMap::new();
         hints.insert("desktop-entry".into(), ICON.to_variant());
         hints.insert("urgency".into(), 1u8.to_variant());
-        
+
         let params = ("Reminders", 0u32, ICON, summary.as_str(), body.as_str(), actions, hints, 0i32).to_variant();
         let shown = self.shown.clone();
         conn.call(
@@ -117,7 +121,9 @@ fn body(reminder: &Reminder, now: i64) -> String {
     match reminder.item.due {
         Some(nixe_eds::When::Time(due)) => {
             let at = DateTime::from_timestamp(due, 0).map(|t| t.with_timezone(&Local));
-            let clock = at.map(|t| if twelve_hour() { t.format("%-I:%M %p").to_string() } else { t.format("%H:%M").to_string() }).unwrap_or_default();
+            let clock = at
+                .map(|t| if twelve_hour() { t.format("%-I:%M %p").to_string() } else { t.format("%H:%M").to_string() })
+                .unwrap_or_default();
             parts.push(if (due - now).abs() < 120 {
                 "Due now".to_string()
             } else if due < now {
@@ -146,7 +152,8 @@ fn body(reminder: &Reminder, now: i64) -> String {
 
 /// A 12-hour clock where the locale uses one (as the Calendar window does).
 fn twelve_hour() -> bool {
-    let locale = ["LC_ALL", "LC_TIME", "LANG"].iter().find_map(|k| std::env::var(k).ok().filter(|v| !v.is_empty())).unwrap_or_default();
+    let locale =
+        ["LC_ALL", "LC_TIME", "LANG"].iter().find_map(|k| std::env::var(k).ok().filter(|v| !v.is_empty())).unwrap_or_default();
     let region = locale.split(['.', '@']).next().unwrap_or("").rsplit('_').next().unwrap_or("").to_string();
     ["US", "CA", "AU", "NZ", "IN", "PH", "PK", "EG", "SA"].contains(&region.as_str())
 }

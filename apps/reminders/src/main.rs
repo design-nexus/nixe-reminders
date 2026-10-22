@@ -19,6 +19,7 @@ pub const APP_ID: &str = "io.github.design_nexus.nixe.Reminders";
 const USAGE: &str = "Usage: nixe-reminders [OPTIONS]\n\
 \n\
   --section ID    open today, scheduled, flagged, all, completed, list:UID or settings\n\
+  --add TEXT      add a reminder from words (\"Call Sam tomorrow at 9\")\n\
   --toggle        close the window if it's open, otherwise open it\n";
 
 /// Starts the alerts service if it's installed and not running (the installer
@@ -34,6 +35,18 @@ fn start_alerts() {
             .stdout(std::process::Stdio::null())
             .stderr(std::process::Stdio::null())
             .spawn();
+    }
+}
+
+/// Adds once the lists have loaded (a fresh start takes a moment); gives up
+/// after 15 s.
+fn add_when_ready(text: String, tries: u32) {
+    if window::ready() {
+        window::add_text(&text);
+    } else if tries < 60 {
+        glib::timeout_add_local_once(std::time::Duration::from_millis(250), move || add_when_ready(text, tries + 1));
+    } else {
+        window::toast("The task lists didn't load, so the reminder wasn't added.");
     }
 }
 
@@ -66,6 +79,9 @@ fn main() -> glib::ExitCode {
             return glib::ExitCode::SUCCESS;
         }
         window::present(app, value("--section").as_deref());
+        if let Some(text) = value("--add").filter(|t| !t.trim().is_empty()) {
+            add_when_ready(text, 0);
+        }
         glib::ExitCode::SUCCESS
     });
     app.connect_shutdown(|_| prefs::flush());

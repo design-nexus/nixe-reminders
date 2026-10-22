@@ -15,7 +15,8 @@ use serde_json::{Value, json};
 const MAX_TASKS: usize = 200;
 
 pub fn tools() -> Value {
-    let due = json!({"type": "string", "description": "YYYY-MM-DD, local YYYY-MM-DDTHH:MM, RFC 3339, or words like \"tomorrow at 9\""});
+    let due =
+        json!({"type": "string", "description": "YYYY-MM-DD, local YYYY-MM-DDTHH:MM, RFC 3339, or words like \"tomorrow at 9\""});
     json!([
         {"name": "reminders.lists", "description": "The task lists: name, account, how many are open, read-only.", "inputSchema": {"type": "object", "properties": {}}},
         {"name": "reminders.today", "description": "Reminders due today or overdue.", "inputSchema": {"type": "object", "properties": {}}},
@@ -53,7 +54,12 @@ pub fn handle(name: &str, args: Value, reply: Reply) {
         }
         "reminders.search" => {
             let Ok(query) = text(&args, "query").map(|q| q.to_lowercase()) else { return reply(Err("query is required".into())) };
-            reply(Ok(respond(tasks.iter().filter(|t| t.title.to_lowercase().contains(&query) || t.notes.to_lowercase().contains(&query)).collect())));
+            reply(Ok(respond(
+                tasks
+                    .iter()
+                    .filter(|t| t.title.to_lowercase().contains(&query) || t.notes.to_lowercase().contains(&query))
+                    .collect(),
+            )));
         }
         "reminders.create" => {
             let title = match text(&args, "title") {
@@ -87,19 +93,27 @@ pub fn handle(name: &str, args: Value, reply: Reply) {
             });
         }
         "reminders.complete" => {
-            let (Ok(list), Ok(uid)) = (text(&args, "list"), text(&args, "uid")) else { return reply(Err("list and uid are required".into())) };
+            let (Ok(list), Ok(uid)) = (text(&args, "list"), text(&args, "uid")) else {
+                return reply(Err("list and uid are required".into()));
+            };
             let done = args["done"].as_bool().unwrap_or(true);
             worker::ask(
                 move || {
                     worker::with_list(&list, |l| {
-                        if done { l.complete(&uid) } else { l.modify(&uid, None, Scope::All, &Draft { done: Some(false), ..Draft::default() }) }
+                        if done {
+                            l.complete(&uid)
+                        } else {
+                            l.modify(&uid, None, Scope::All, &Draft { done: Some(false), ..Draft::default() })
+                        }
                     })
                 },
                 move |r| reply(r.map(|()| json!({"done": done}))),
             );
         }
         "reminders.edit" => {
-            let (Ok(list), Ok(uid)) = (text(&args, "list"), text(&args, "uid")) else { return reply(Err("list and uid are required".into())) };
+            let (Ok(list), Ok(uid)) = (text(&args, "list"), text(&args, "uid")) else {
+                return reply(Err("list and uid are required".into()));
+            };
             let mut draft = Draft {
                 summary: args["title"].as_str().map(str::to_string).filter(|t| !t.trim().is_empty()),
                 description: args["notes"].as_str().map(str::to_string),
@@ -115,11 +129,19 @@ pub fn handle(name: &str, args: Value, reply: Reply) {
             if draft == Draft::default() {
                 return reply(Err("Nothing to change.".into()));
             }
-            worker::ask(move || worker::with_list(&list, |l| l.modify(&uid, None, Scope::All, &draft)), move |r| reply(r.map(|()| json!({"changed": true}))));
+            worker::ask(
+                move || worker::with_list(&list, |l| l.modify(&uid, None, Scope::All, &draft)),
+                move |r| reply(r.map(|()| json!({"changed": true}))),
+            );
         }
         "reminders.delete" => {
-            let (Ok(list), Ok(uid)) = (text(&args, "list"), text(&args, "uid")) else { return reply(Err("list and uid are required".into())) };
-            worker::ask(move || worker::with_list(&list, |l| l.remove(&uid, None, Scope::All)), move |r| reply(r.map(|()| json!({"deleted": true}))));
+            let (Ok(list), Ok(uid)) = (text(&args, "list"), text(&args, "uid")) else {
+                return reply(Err("list and uid are required".into()));
+            };
+            worker::ask(
+                move || worker::with_list(&list, |l| l.remove(&uid, None, Scope::All)),
+                move |r| reply(r.map(|()| json!({"deleted": true}))),
+            );
         }
         other => reply(Err(format!("Reminders has no tool called {other}."))),
     }

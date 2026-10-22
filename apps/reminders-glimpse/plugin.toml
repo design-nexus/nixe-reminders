@@ -1,0 +1,12 @@
+id = "nixe-reminders"
+name = "Reminders"
+version = "0.1.0"
+api_version = 1
+exec = ["./nixe-reminders-glimpse"]
+capabilities = ["search", "preview"]
+description = "Your reminders. Try reminders, today, flagged, words from a reminder, or remind me to … to add one."
+
+[permissions]
+network = false
+selected_sources = false
+read = []

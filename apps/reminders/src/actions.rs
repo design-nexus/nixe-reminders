@@ -43,7 +43,13 @@ pub fn parse_quick(text: &str, now: NaiveDateTime, caps: Caps, default_day: Opti
 }
 
 /// Adds a task. `parent` makes it a subtask.
-pub fn add(list: String, quick: Quick, parent: Option<String>, notes: Option<String>, after: impl FnOnce(Result<String, String>) + 'static) {
+pub fn add(
+    list: String,
+    quick: Quick,
+    parent: Option<String>,
+    notes: Option<String>,
+    after: impl FnOnce(Result<String, String>) + 'static,
+) {
     let alarms = quick.due.map(|due| match due {
         // A due time reminds at that time; a due day at the usual hour.
         Due::At(_) => vec![0],
@@ -81,7 +87,8 @@ pub fn set_done(task: &Task, done: bool) {
         },
         move |result| match result {
             Ok((list, backup)) if done => {
-                let message = if repeats { format!("“{title}” moved to its next date.") } else { format!("Completed “{title}”.") };
+                let message =
+                    if repeats { format!("“{title}” moved to its next date.") } else { format!("Completed “{title}”.") };
                 window::toast_undo(&message, move || restore(list.clone(), backup.clone()));
             }
             Ok(_) => {}

@@ -13,7 +13,11 @@ pub enum Update {
     Unavailable(String),
     Lists(Vec<ListInfo>),
     /// Every task of every list, and which lists loaded (others are offline or failed).
-    Tasks { tasks: Vec<Task>, loaded: HashSet<String>, problems: Vec<String> },
+    Tasks {
+        tasks: Vec<Task>,
+        loaded: HashSet<String>,
+        problems: Vec<String>,
+    },
 }
 
 #[derive(Default)]
@@ -80,7 +84,10 @@ pub fn refresh(reply: impl FnOnce(Vec<String>) + 'static) {
         || {
             let problems = STATE.with(|s| {
                 let s = s.borrow();
-                s.open.iter().filter_map(|(uid, list)| list.refresh().err().map(|e| format!("{}: {e}", name_of(&s, uid)))).collect()
+                s.open
+                    .iter()
+                    .filter_map(|(uid, list)| list.refresh().err().map(|e| format!("{}: {e}", name_of(&s, uid))))
+                    .collect()
             });
             schedule_lists();
             problems

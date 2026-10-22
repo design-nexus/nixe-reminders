@@ -275,7 +275,9 @@ pub fn tree(tasks: &[Task], indices: &[usize]) -> Vec<(usize, usize)> {
 pub fn timestamp(at: NaiveDateTime) -> i64 {
     match Local.from_local_datetime(&at) {
         chrono::LocalResult::Single(t) | chrono::LocalResult::Ambiguous(t, _) => t.timestamp(),
-        chrono::LocalResult::None => Local.from_local_datetime(&(at + chrono::Duration::hours(1))).earliest().map_or(0, |t| t.timestamp()),
+        chrono::LocalResult::None => {
+            Local.from_local_datetime(&(at + chrono::Duration::hours(1))).earliest().map_or(0, |t| t.timestamp())
+        }
     }
 }
 

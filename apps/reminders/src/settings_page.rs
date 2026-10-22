@@ -68,15 +68,11 @@ fn lists(page: &Page) {
         );
         group.add(&row);
     }
-    let (row, _) = widgets::switch_row(
-        "Show completed",
-        "List done tasks under the open ones in each list.",
-        prefs.show_completed,
-        |on| {
+    let (row, _) =
+        widgets::switch_row("Show completed", "List done tasks under the open ones in each list.", prefs.show_completed, |on| {
             prefs::update(|p| p.show_completed = on);
             window::refresh_page();
-        },
-    );
+        });
     group.add(&row);
     let hours: Vec<(String, String)> = (5..=12).map(|h| (h.to_string(), format!("{h}:00"))).collect();
     let (row, _) = widgets::choice_row(

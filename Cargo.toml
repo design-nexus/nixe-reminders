@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["apps/reminders", "apps/remindersd", "crates/nixe-reminders-core"]
+members = ["apps/reminders", "apps/reminders-glimpse", "apps/remindersd", "crates/nixe-reminders-core"]
 
 [workspace.package]
 edition = "2024"

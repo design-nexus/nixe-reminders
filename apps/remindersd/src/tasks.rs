@@ -8,7 +8,8 @@
 //!       due_day TEXT,      -- YYYY-MM-DD or NULL
 //!       due_at INTEGER,    -- Unix seconds when the task has a due time, else NULL
 //!       overdue INTEGER, flagged INTEGER, priority INTEGER)
-//! meta(key PRIMARY KEY, value)   -- written_at (Unix seconds)
+//! meta(key PRIMARY KEY, value)   -- written_at (Unix seconds), utc_offset (local
+//!                                  seconds east of UTC then; for sandboxed readers)
 //! ```
 
 use chrono::NaiveDateTime;
@@ -17,7 +18,13 @@ use rusqlite::{Connection, params};
 use std::collections::HashMap;
 use std::path::Path;
 
-pub fn write(path: &Path, lists: &[ListInfo], tasks: &[Task], meta: &HashMap<(String, String), Meta>, now: NaiveDateTime) -> rusqlite::Result<usize> {
+pub fn write(
+    path: &Path,
+    lists: &[ListInfo],
+    tasks: &[Task],
+    meta: &HashMap<(String, String), Meta>,
+    now: NaiveDateTime,
+) -> rusqlite::Result<usize> {
     if let Some(dir) = path.parent() {
         let _ = std::fs::create_dir_all(dir);
     }
@@ -64,6 +71,8 @@ pub fn write(path: &Path, lists: &[ListInfo], tasks: &[Task], meta: &HashMap<(St
                 count += 1;
             }
             tx.execute("INSERT INTO meta (key, value) VALUES ('written_at', ?1)", params![timestamp(now).to_string()])?;
+            let offset = chrono::Local::now().offset().local_minus_utc();
+            tx.execute("INSERT INTO meta (key, value) VALUES ('utc_offset', ?1)", params![offset.to_string()])?;
         }
         tx.commit()?;
     }
@@ -98,7 +107,11 @@ mod tests {
         let path = dir.join("tasks.sqlite");
         let d = |day| NaiveDate::from_ymd_opt(2026, 10, day).unwrap();
         let now = d(21).and_hms_opt(12, 0, 0).unwrap();
-        let tasks = vec![task("late", Some(Due::Day(d(20))), false), task("later", Some(Due::At(d(22).and_hms_opt(9, 0, 0).unwrap())), false), task("done", None, true)];
+        let tasks = vec![
+            task("late", Some(Due::Day(d(20))), false),
+            task("later", Some(Due::At(d(22).and_hms_opt(9, 0, 0).unwrap())), false),
+            task("done", None, true),
+        ];
         let mut meta = HashMap::new();
         meta.insert(("l".to_string(), "later".to_string()), Meta { flagged: true, ..Meta::default() });
         assert_eq!(write(&path, &[], &tasks, &meta, now).unwrap(), 2);
