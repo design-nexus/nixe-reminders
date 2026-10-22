@@ -20,7 +20,8 @@ const USAGE: &str = "Usage: nixe-reminders [OPTIONS]\n\
 \n\
   --section ID    open today, scheduled, flagged, all, completed, list:UID or settings\n\
   --add TEXT      add a reminder from words (\"Call Sam tomorrow at 9\")\n\
-  --toggle        close the window if it's open, otherwise open it\n";
+  --toggle        close the window if it's open, otherwise open it\n\
+  --describe      print the control tools (JSON) and exit\n";
 
 /// Starts the alerts service if it's installed and not running (the installer
 /// enables it for login without starting it).
@@ -55,6 +56,11 @@ fn main() -> glib::ExitCode {
     let args: Vec<String> = std::env::args().collect();
     if args.iter().any(|a| a == "--help" || a == "-h") {
         print!("{USAGE}");
+        return glib::ExitCode::SUCCESS;
+    }
+    // The control tools as JSON, without a window (Nixe Assistant's abilities).
+    if args.iter().any(|a| a == "--describe") {
+        println!("{}", control::tools());
         return glib::ExitCode::SUCCESS;
     }
     if std::env::var_os("GSK_RENDERER").is_none() {
