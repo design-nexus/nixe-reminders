@@ -583,7 +583,7 @@ dependencies = [
 [[package]]
 name = "nixe-accounts"
 version = "0.1.0"
-source = "git+file:///home/ken/Projects/nixe-core?rev=87682e6c936b6a4f006639b1a1c099e96346c07c#87682e6c936b6a4f006639b1a1c099e96346c07c"
+source = "git+https://github.com/design-nexus/nixe-core.git?rev=87682e6c936b6a4f006639b1a1c099e96346c07c#87682e6c936b6a4f006639b1a1c099e96346c07c"
 dependencies = [
  "anyhow",
  "gio",
@@ -595,7 +595,7 @@ dependencies = [
 [[package]]
 name = "nixe-camel-sys"
 version = "0.1.0"
-source = "git+file:///home/ken/Projects/nixe-core?rev=87682e6c936b6a4f006639b1a1c099e96346c07c#87682e6c936b6a4f006639b1a1c099e96346c07c"
+source = "git+https://github.com/design-nexus/nixe-core.git?rev=87682e6c936b6a4f006639b1a1c099e96346c07c#87682e6c936b6a4f006639b1a1c099e96346c07c"
 
 [[package]]
 name = "nixe-core"
@@ -612,7 +612,7 @@ dependencies = [
 [[package]]
 name = "nixe-core"
 version = "0.1.0"
-source = "git+file:///home/ken/Projects/nixe-core?rev=87682e6c936b6a4f006639b1a1c099e96346c07c#87682e6c936b6a4f006639b1a1c099e96346c07c"
+source = "git+https://github.com/design-nexus/nixe-core.git?rev=87682e6c936b6a4f006639b1a1c099e96346c07c#87682e6c936b6a4f006639b1a1c099e96346c07c"
 dependencies = [
  "anyhow",
  "gtk4",
@@ -624,7 +624,7 @@ dependencies = [
 [[package]]
 name = "nixe-ecal-sys"
 version = "0.1.0"
-source = "git+file:///home/ken/Projects/nixe-core?rev=87682e6c936b6a4f006639b1a1c099e96346c07c#87682e6c936b6a4f006639b1a1c099e96346c07c"
+source = "git+https://github.com/design-nexus/nixe-core.git?rev=87682e6c936b6a4f006639b1a1c099e96346c07c#87682e6c936b6a4f006639b1a1c099e96346c07c"
 dependencies = [
  "gio-sys",
  "glib-sys",
@@ -639,7 +639,7 @@ dependencies = [
 [[package]]
 name = "nixe-edataserver-sys"
 version = "0.1.0"
-source = "git+file:///home/ken/Projects/nixe-core?rev=87682e6c936b6a4f006639b1a1c099e96346c07c#87682e6c936b6a4f006639b1a1c099e96346c07c"
+source = "git+https://github.com/design-nexus/nixe-core.git?rev=87682e6c936b6a4f006639b1a1c099e96346c07c#87682e6c936b6a4f006639b1a1c099e96346c07c"
 dependencies = [
  "gio-sys",
  "glib-sys",
@@ -655,7 +655,7 @@ dependencies = [
 [[package]]
 name = "nixe-eds"
 version = "0.1.0"
-source = "git+file:///home/ken/Projects/nixe-core?rev=87682e6c936b6a4f006639b1a1c099e96346c07c#87682e6c936b6a4f006639b1a1c099e96346c07c"
+source = "git+https://github.com/design-nexus/nixe-core.git?rev=87682e6c936b6a4f006639b1a1c099e96346c07c#87682e6c936b6a4f006639b1a1c099e96346c07c"
 dependencies = [
  "gio-sys",
  "glib",
@@ -670,7 +670,7 @@ dependencies = [
 [[package]]
 name = "nixe-icalglib-sys"
 version = "0.1.0"
-source = "git+file:///home/ken/Projects/nixe-core?rev=87682e6c936b6a4f006639b1a1c099e96346c07c#87682e6c936b6a4f006639b1a1c099e96346c07c"
+source = "git+https://github.com/design-nexus/nixe-core.git?rev=87682e6c936b6a4f006639b1a1c099e96346c07c#87682e6c936b6a4f006639b1a1c099e96346c07c"
 dependencies = [
  "gio-sys",
  "glib-sys",
@@ -682,7 +682,7 @@ dependencies = [
 [[package]]
 name = "nixe-json-glib-sys"
 version = "0.1.0"
-source = "git+file:///home/ken/Projects/nixe-core?rev=87682e6c936b6a4f006639b1a1c099e96346c07c#87682e6c936b6a4f006639b1a1c099e96346c07c"
+source = "git+https://github.com/design-nexus/nixe-core.git?rev=87682e6c936b6a4f006639b1a1c099e96346c07c#87682e6c936b6a4f006639b1a1c099e96346c07c"
 dependencies = [
  "gio-sys",
  "glib-sys",
@@ -694,7 +694,7 @@ dependencies = [
 [[package]]
 name = "nixe-libxml2-sys"
 version = "0.1.0"
-source = "git+file:///home/ken/Projects/nixe-core?rev=87682e6c936b6a4f006639b1a1c099e96346c07c#87682e6c936b6a4f006639b1a1c099e96346c07c"
+source = "git+https://github.com/design-nexus/nixe-core.git?rev=87682e6c936b6a4f006639b1a1c099e96346c07c#87682e6c936b6a4f006639b1a1c099e96346c07c"
 
 [[package]]
 name = "nixe-reminders"
@@ -704,7 +704,7 @@ dependencies = [
  "glib",
  "gtk4",
  "nixe-accounts",
- "nixe-core 0.1.0 (git+file:///home/ken/Projects/nixe-core?rev=87682e6c936b6a4f006639b1a1c099e96346c07c)",
+ "nixe-core 0.1.0 (git+https://github.com/design-nexus/nixe-core.git?rev=87682e6c936b6a4f006639b1a1c099e96346c07c)",
  "nixe-eds",
  "nixe-reminders-core",
  "nixe-theme",
@@ -740,7 +740,7 @@ dependencies = [
  "chrono",
  "gio",
  "glib",
- "nixe-core 0.1.0 (git+file:///home/ken/Projects/nixe-core?rev=87682e6c936b6a4f006639b1a1c099e96346c07c)",
+ "nixe-core 0.1.0 (git+https://github.com/design-nexus/nixe-core.git?rev=87682e6c936b6a4f006639b1a1c099e96346c07c)",
  "nixe-eds",
  "nixe-reminders-core",
  "rusqlite",
@@ -770,7 +770,7 @@ dependencies = [
 [[package]]
 name = "nixe-when"
 version = "0.1.0"
-source = "git+file:///home/ken/Projects/nixe-core?rev=87682e6c936b6a4f006639b1a1c099e96346c07c#87682e6c936b6a4f006639b1a1c099e96346c07c"
+source = "git+https://github.com/design-nexus/nixe-core.git?rev=87682e6c936b6a4f006639b1a1c099e96346c07c#87682e6c936b6a4f006639b1a1c099e96346c07c"
 dependencies = [
  "chrono",
 ]

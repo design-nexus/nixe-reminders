@@ -31,5 +31,6 @@
 - Checks: `cargo test --workspace`, `cargo clippy --workspace --all-targets -- -D warnings`.
   Layout: `REMINDERS_SNAPSHOT=/tmp/r.png REMINDERS_SNAPSHOT_PAGE=all REMINDERS_SNAPSHOT_SELECT=1`
   under scratch `XDG_CONFIG_HOME`/`XDG_STATE_HOME`/`XDG_DATA_HOME`.
-- Until nixe-core's crates are published, Cargo.toml points at the sibling checkout with
-  a `file://` git URL; CI refuses that on purpose.
+- Shared crates come from nixe-core on GitHub, pinned by `rev` (Cargo.toml and
+  Cargo.lock). To build against unpushed nixe-core changes, push them first and bump the
+  rev; never commit a `file://` source (CI refuses it, and the one-line install can't fetch it).
