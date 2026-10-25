@@ -9,5 +9,5 @@ repository.workspace = true
 
 [dependencies]
 chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
-nixe-eds = { git = "file:///home/ken/Projects/nixe-core", rev = "3a91eb0f0ae6be1bd42750723e17e26bb6dbea0f" }
+nixe-eds = { git = "file:///home/ken/Projects/nixe-core", rev = "87682e6c936b6a4f006639b1a1c099e96346c07c" }
 rusqlite = { version = "0.40", features = ["bundled"] }

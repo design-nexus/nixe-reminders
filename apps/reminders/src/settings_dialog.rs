@@ -11,6 +11,8 @@ pub use nixe_ui::settings_card::fit;
 const GROUPS: &[(&str, &str, &str)] = &[
     ("Reminders window", "applications-graphics-symbolic", "Theme, glow, motion"),
     ("Lists", "view-list-symbolic", "Where new reminders go, completed tasks"),
+    ("Alerts", "alarm-symbolic", "Alerts for new reminders"),
+    ("Task lists", "view-list-bullet-symbolic", "Turn lists and accounts on or off"),
     ("Accounts", "system-users-symbolic", "Online accounts in Settings"),
     ("Keyboard", "input-keyboard-symbolic", "Shortcuts"),
 ];

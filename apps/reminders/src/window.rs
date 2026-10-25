@@ -89,6 +89,8 @@ struct Ui {
 }
 
 thread_local! {
+    /// Each reminder row on the page, for menus opened from the keyboard.
+    static ROWS: RefCell<std::collections::HashMap<Key, glib::WeakRef<gtk::Widget>>> = RefCell::new(Default::default());
     static UI: RefCell<Option<Rc<RefCell<Ui>>>> = const { RefCell::new(None) };
     static NARROW: Cell<bool> = const { Cell::new(false) };
     static TOAST: RefCell<Option<gtk::Box>> = const { RefCell::new(None) };
@@ -243,7 +245,7 @@ pub fn refresh_page() {
     refresh_status();
 }
 
-fn show_page(page: Page) {
+pub(crate) fn show_page(page: Page) {
     let Some(ui) = ui() else { return };
     prefs::update(|p| p.last_section = page.id());
     {
@@ -484,7 +486,21 @@ fn task_row(
     let key = task.key();
     click.connect_released(move |_, _, _, _| select(Some(key.clone())));
     row.add_controller(click);
+    let t = task.clone();
+    widgets::on_right_click(&row, move |w, x, y| {
+        select(Some(t.key()));
+        crate::menus::task(w, x, y, &t);
+    });
+    ROWS.with(|r| r.borrow_mut().insert(task.key(), row.upcast_ref::<gtk::Widget>().downgrade()));
     row
+}
+
+/// The selected reminder's menu (the Menu key), at its row.
+fn menu_for_selected() {
+    let Some(task) = selected_task() else { return };
+    let Some(row) = ROWS.with(|r| r.borrow().get(&task.key()).and_then(|w| w.upgrade())) else { return };
+    let y = row.height() as f64 / 2.0;
+    crate::menus::task(&row, 40.0, y, &task);
 }
 
 /// Flags or unflags a task (kept on this computer).
@@ -763,6 +779,7 @@ fn list_button(list: &ListInfo, count: usize, active: bool) -> gtk::Button {
     button.set_tooltip_text(Some(&list.name));
     let uid = list.uid.clone();
     button.connect_clicked(move |_| show_page(Page::List(uid.clone())));
+    crate::menus::attach_list(&button, list);
     button
 }
 
@@ -789,7 +806,7 @@ fn group_label(text: &str, first: bool, add: bool) -> gtk::Widget {
     row.upcast()
 }
 
-fn rebuild_nav() {
+pub(crate) fn rebuild_nav() {
     let Some(ui) = ui() else { return };
     let list_box = ui.borrow().nav_list.clone();
     while let Some(child) = list_box.first_child() {
@@ -1161,6 +1178,10 @@ fn install_keys(window: &gtk::ApplicationWindow, search: &gtk::SearchEntry, quic
         }
         if typing(win.upcast_ref()) {
             return glib::Propagation::Proceed;
+        }
+        if widgets::is_menu_key(key, mods) {
+            menu_for_selected();
+            return glib::Propagation::Stop;
         }
         match key {
             gdk::Key::n => {

@@ -3,6 +3,7 @@
 mod actions;
 mod control;
 mod detail;
+mod menus;
 mod prefs;
 mod settings_dialog;
 mod settings_page;

@@ -4,11 +4,14 @@ use crate::prefs;
 use crate::theme;
 use crate::widgets::{self, Page};
 use crate::window;
+use crate::worker;
 use gtk::prelude::*;
 
 pub fn build(page: &Page) {
     window_group(page);
     lists(page);
+    alerts(page);
+    task_lists(page);
     accounts(page);
     keyboard(page);
 }
@@ -83,6 +86,100 @@ fn lists(page: &Page) {
         |hour| prefs::update(|p| p.default_hour = hour.parse().unwrap_or(9)),
     );
     group.add(&row);
+}
+
+fn alerts(page: &Page) {
+    let group = page.group("Alerts");
+    group.note("For new reminders, in lists that keep alerts. Change one reminder's alert in its details.");
+    let prefs = prefs::get();
+    let mut timed = vec![("none".to_string(), "None".to_string())];
+    timed.extend(
+        [
+            (0, "At the time"),
+            (5, "5 minutes before"),
+            (15, "15 minutes before"),
+            (30, "30 minutes before"),
+            (60, "1 hour before"),
+        ]
+        .iter()
+        .map(|(m, l)| (m.to_string(), l.to_string())),
+    );
+    let (row, _) = widgets::choice_row(
+        "Reminders with a time",
+        "When the alert goes off for “call Sam at 3”.",
+        timed,
+        &prefs.timed_alert.map(|m| m.to_string()).unwrap_or_else(|| "none".into()),
+        |m| prefs::update(|p| p.timed_alert = m.parse().ok()),
+    );
+    group.add(&row);
+    let (row, _) = widgets::switch_row(
+        "Reminders due on a day",
+        "An alert at the Remind at time for reminders with a date but no time.",
+        prefs.day_alerts,
+        |on| prefs::update(|p| p.day_alerts = on),
+    );
+    group.add(&row);
+}
+
+/// Task lists switched on or off, by account (off: not loaded or synced, in
+/// every app; switch on again here).
+fn task_lists(page: &Page) {
+    let group = page.group("Task lists");
+    group.note("Turn lists off to stop loading and syncing them, here and in other apps.");
+    fill_lists(&group.list);
+}
+
+fn fill_lists(list: &gtk::Box) {
+    let list = list.clone();
+    worker::all_lists(move |all| {
+        while let Some(child) = list.first_child() {
+            list.remove(&child);
+        }
+        let mut groups: Vec<(String, Vec<(nixe_eds::Source, bool)>)> = Vec::new();
+        for (source, on) in all {
+            let label = source.group.clone().unwrap_or_else(|| "On this computer".into());
+            match groups.iter_mut().find(|(g, _)| *g == label) {
+                Some((_, items)) => items.push((source, on)),
+                None => groups.push((label, vec![(source, on)])),
+            }
+        }
+        for (label, items) in groups {
+            let uids: Vec<String> = items.iter().map(|(s, _)| s.uid.clone()).collect();
+            let any_on = items.iter().any(|(_, on)| *on);
+            let l = list.clone();
+            let (row, _) = widgets::switch_row(&label, &format!("{} lists", items.len()), any_on, move |on| {
+                let (count, done) = (uids.len(), std::rc::Rc::new(std::cell::Cell::new(0)));
+                for uid in &uids {
+                    let (l, done) = (l.clone(), done.clone());
+                    worker::set_enabled(uid.clone(), on, move |r| {
+                        if let Err(e) = r {
+                            window::toast(&e);
+                        }
+                        done.set(done.get() + 1);
+                        if done.get() == count {
+                            fill_lists(&l);
+                        }
+                    });
+                }
+            });
+            row.add_css_class("account-row");
+            list.append(&row);
+            for (source, on) in items {
+                let (uid, l) = (source.uid.clone(), list.clone());
+                let (row, _) = widgets::switch_row(source.label(), "", on, move |on| {
+                    let l = l.clone();
+                    worker::set_enabled(uid.clone(), on, move |r| {
+                        if let Err(e) = r {
+                            window::toast(&e);
+                        }
+                        fill_lists(&l);
+                    });
+                });
+                row.add_css_class("nested-row");
+                list.append(&row);
+            }
+        }
+    });
 }
 
 fn accounts(page: &Page) {

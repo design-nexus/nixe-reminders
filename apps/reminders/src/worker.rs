@@ -79,6 +79,38 @@ pub fn with_list<T>(uid: &str, f: impl FnOnce(&Calendar) -> Result<T, nixe_eds::
 }
 
 /// Asks every open list to sync with its server now; replies with problems.
+fn registry_call(
+    work: impl FnOnce(&Registry) -> Result<(), nixe_eds::Error> + Send + 'static,
+    reply: impl FnOnce(Result<(), String>) + 'static,
+) {
+    ask(
+        move || {
+            let r = STATE.with(|s| s.borrow().registry.as_ref().map(work));
+            schedule_lists();
+            match r {
+                Some(Ok(())) => Ok(()),
+                Some(Err(e)) => Err(e.to_string()),
+                None => Err("Task lists aren't available.".into()),
+            }
+        },
+        reply,
+    );
+}
+
+/// Switches a task list on or off for every app.
+pub fn set_enabled(uid: String, enabled: bool, reply: impl FnOnce(Result<(), String>) + 'static) {
+    registry_call(move |r| r.set_enabled(&uid, enabled), reply);
+}
+
+pub fn set_color(uid: String, color: String, reply: impl FnOnce(Result<(), String>) + 'static) {
+    registry_call(move |r| r.set_color(&uid, Kind::TaskList, &color), reply);
+}
+
+/// Every task list, with whether it's switched on (Settings → Task lists).
+pub fn all_lists(reply: impl FnOnce(Vec<(nixe_eds::Source, bool)>) + 'static) {
+    ask(|| STATE.with(|s| s.borrow().registry.as_ref().map(|r| r.all_sources(Kind::TaskList)).unwrap_or_default()), reply);
+}
+
 pub fn refresh(reply: impl FnOnce(Vec<String>) + 'static) {
     ask(
         || {

@@ -143,3 +143,12 @@
 button.destructive {
   color: @theme_danger;
 }
+
+/* Settings → Task lists: each account's switch, then its lists under it. */
+.settings-option.account-row .option-title {
+  font-weight: 600;
+}
+
+.settings-option.nested-row {
+  padding-left: 32px;
+}

@@ -20,6 +20,10 @@ pub struct Prefs {
     pub show_completed: bool,
     /// The time "tomorrow" or "on Friday" means when no time is given.
     pub default_hour: u32,
+    /// Minutes before a timed reminder's due time its alert goes off; none when empty.
+    pub timed_alert: Option<i64>,
+    /// Reminders due on a day (no time) get an alert at `default_hour`.
+    pub day_alerts: bool,
 }
 
 impl Default for Prefs {
@@ -34,6 +38,8 @@ impl Default for Prefs {
             default_list: String::new(),
             show_completed: false,
             default_hour: 9,
+            timed_alert: Some(0),
+            day_alerts: true,
         }
     }
 }

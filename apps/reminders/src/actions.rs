@@ -50,10 +50,11 @@ pub fn add(
     notes: Option<String>,
     after: impl FnOnce(Result<String, String>) + 'static,
 ) {
-    let alarms = quick.due.map(|due| match due {
-        // A due time reminds at that time; a due day at the usual hour.
-        Due::At(_) => vec![0],
-        Due::Day(_) => vec![-(prefs::get().default_hour as i64 * 60)],
+    // A due time reminds at (or before) that time; a due day at the usual hour.
+    let p = prefs::get();
+    let alarms = quick.due.and_then(|due| match due {
+        Due::At(_) => p.timed_alert.map(|m| vec![m]),
+        Due::Day(_) => p.day_alerts.then(|| vec![-(p.default_hour as i64 * 60)]),
     });
     let caps = window::list_caps(&list);
     let draft = Draft {

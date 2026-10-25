@@ -24,6 +24,10 @@
 - Control tools (`control.rs`): `reminders.lists/today/list/search` read;
   `reminders.create` (with `source` for Mail's "Remind me"), `complete`, `edit`,
   `delete` change. Assistant needs them registered and the changing ones gated.
+- Right-click menus (`menus.rs`, `widgets::popup_menu`; Menu key or Shift+F10 for the
+  selected reminder): reminders (offering only what the list keeps) and task lists.
+  Turning a list off is EDS's `enabled` (`Registry::set_enabled`); Settings → Task lists
+  lists them all. New reminders' alerts follow prefs `timed_alert` and `day_alerts`.
 - Checks: `cargo test --workspace`, `cargo clippy --workspace --all-targets -- -D warnings`.
   Layout: `REMINDERS_SNAPSHOT=/tmp/r.png REMINDERS_SNAPSHOT_PAGE=all REMINDERS_SNAPSHOT_SELECT=1`
   under scratch `XDG_CONFIG_HOME`/`XDG_STATE_HOME`/`XDG_DATA_HOME`.
