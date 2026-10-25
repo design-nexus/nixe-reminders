@@ -14,7 +14,8 @@ computer, in one place, for Omarchy. Part of the [Nixe](https://github.com/desig
 Accounts are added in **Settings → Online Accounts**. Tasks are kept by Evolution Data
 Server; each list keeps what its service supports (Google Tasks has dates but no times,
 alerts, repeats or priority; Microsoft To Do has dates but no times or alerts). Microsoft 365
-and Outlook.com lists need the `evolution-ews` package.
+and Outlook.com lists need the `evolution-ews` package, or [`evolution-ews-backends`](https://github.com/design-nexus/nixe-core/tree/main/packaging/evolution-ews-backends),
+which is the same without the Evolution app.
 
 ## Install
 
