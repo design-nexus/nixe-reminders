@@ -19,7 +19,7 @@
 - `apps/remindersd`: GTK-free user service. Task-list alerts → notifications with
   Complete, Snooze 10 min, Dismiss (calendar alerts are Nixe Calendar's); quiet while
   `evolution-alarm-notify` runs. Writes `tasks.sqlite` (every open task; schema in
-  `tasks.rs`, a contract for Glimpse). The installer enables it without starting it;
+  `tasks.rs`, a contract for Glimpse). The installer enables and starts it;
   the app starts it on open. End to end: `tools/test-remindersd.sh`.
 - Control tools (`control.rs`): `reminders.lists/today/list/search` read;
   `reminders.create` (with `source` for Mail's "Remind me"), `complete`, `edit`,

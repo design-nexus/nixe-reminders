@@ -273,12 +273,12 @@ for a in "${apps[@]}"; do
   fi
 
   if [[ $a == reminders ]]; then
-    # Alerts run in the background; enabled for the next login, and started
-    # when Reminders opens, so installing never starts anything.
+    # Alerts run in the background: enabled for login and started now (one
+    # already running keeps going).
     mkdir -p "$config/systemd/user"
     install -m 644 "$d/../remindersd/data/nixe-remindersd.service" "$config/systemd/user/nixe-remindersd.service"
     systemctl --user daemon-reload 2>/dev/null || true
-    systemctl --user enable nixe-remindersd.service >/dev/null 2>&1 || true
+    systemctl --user enable --now nixe-remindersd.service >/dev/null 2>&1 || true
   fi
 
   if [[ $a == passwords ]]; then
