@@ -1,6 +1,6 @@
 [package]
 name = "nixe-reminders"
-version = "0.1.0"
+version = "0.1.1"
 description = "Reminders for Omarchy: your task lists from every account in one place"
 license.workspace = true
 repository.workspace = true

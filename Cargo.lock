@@ -686,7 +686,7 @@ source = "git+https://github.com/design-nexus/nixe-core.git?rev=5a7166bfc21a5cf8
 
 [[package]]
 name = "nixe-reminders"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "chrono",
  "glib",
@@ -704,7 +704,7 @@ dependencies = [
 
 [[package]]
 name = "nixe-reminders-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "chrono",
  "nixe-eds",
@@ -713,7 +713,7 @@ dependencies = [
 
 [[package]]
 name = "nixe-reminders-glimpse"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "glimpse-plugin-sdk",
@@ -723,7 +723,7 @@ dependencies = [
 
 [[package]]
 name = "nixe-remindersd"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "chrono",
  "gio",

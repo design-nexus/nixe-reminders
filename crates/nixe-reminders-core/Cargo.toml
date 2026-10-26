@@ -1,6 +1,6 @@
 [package]
 name = "nixe-reminders-core"
-version = "0.1.0"
+version = "0.1.1"
 description = "Tasks, smart lists and local metadata for Nixe Reminders"
 edition.workspace = true
 license.workspace = true
