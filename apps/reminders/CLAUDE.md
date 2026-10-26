@@ -38,3 +38,7 @@
   `Sidecar::reorder`); not on smart lists or while searching. Account groups in the
   sidebar fold (prefs `collapsed_groups`). A banner shows for GOA `ms_graph`/`exchange`
   accounts when evolution-ews's EDS backends are missing.
+- Tags are VTODO CATEGORIES (`Task::tags`, `Draft::categories` from nixe-eds, which is pinned
+  to a newer nixe-core commit than nixe-core/nixe-accounts; the suite allows older shared
+  revisions). `#tag` words in quick add become tags (`nixe_reminders_core::hashtags`);
+  Google Tasks keeps none (`Caps::tags`). Search matches tags; rows show them.

@@ -98,6 +98,7 @@ mod tests {
             parent: None,
             rule: None,
             alarms: Vec::new(),
+            tags: Vec::new(),
         }
     }
 

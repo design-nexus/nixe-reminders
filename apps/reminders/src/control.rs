@@ -155,7 +155,7 @@ fn task_json(t: &Task, list_name: &str) -> Value {
     json!({
         "list": t.list, "list_name": list_name, "uid": t.uid, "title": t.title,
         "notes": t.notes.chars().take(500).collect::<String>(), "due": due, "done": t.done,
-        "overdue": t.overdue(actions::now()), "priority": t.priority, "parent": t.parent, "repeats": t.rule.is_some(),
+        "overdue": t.overdue(actions::now()), "priority": t.priority, "parent": t.parent, "repeats": t.rule.is_some(), "tags": t.tags,
     })
 }
 

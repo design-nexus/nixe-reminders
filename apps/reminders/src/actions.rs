@@ -14,13 +14,21 @@ pub struct Quick {
     pub title: String,
     pub due: Option<Due>,
     pub repeat: Option<String>,
+    /// `#tag` words.
+    pub tags: Vec<String>,
     /// Parts the list can't keep (shown as a note).
     pub dropped: Vec<&'static str>,
 }
 
 pub fn parse_quick(text: &str, now: NaiveDateTime, caps: Caps, default_day: Option<chrono::NaiveDate>) -> Quick {
+    let (text, mut tags) = nixe_reminders_core::hashtags(text);
+    let text = text.as_str();
     let parse = nixe_when::parse(text, now);
     let mut dropped = Vec::new();
+    if !tags.is_empty() && !caps.tags {
+        tags.clear();
+        dropped.push("tag");
+    }
     let date = parse.date.or(default_day);
     let mut due = match (date, parse.start) {
         (Some(day), Some(time)) => Some(Due::At(day.and_time(time))),
@@ -39,7 +47,7 @@ pub fn parse_quick(text: &str, now: NaiveDateTime, caps: Caps, default_day: Opti
         dropped.push("repeat");
     }
     let title = if parse.title.trim().is_empty() { text.trim().to_string() } else { parse.title.trim().to_string() };
-    Quick { title, due, repeat, dropped }
+    Quick { title, due, repeat, tags, dropped }
 }
 
 /// Adds a task. `parent` makes it a subtask.
@@ -64,6 +72,7 @@ pub fn add(
         parent: parent.map(Some),
         description: notes,
         alarms: alarms.filter(|_| caps.alerts),
+        categories: Some(quick.tags).filter(|t| !t.is_empty() && caps.tags),
         ..Draft::default()
     };
     worker::ask(move || worker::with_list(&list, |l| l.create(&draft)), after);
@@ -200,7 +209,7 @@ mod tests {
         let full = Caps::default();
         let q = parse_quick("Call Sam tomorrow at 9", at(21, 10), full, None);
         assert_eq!((q.title.as_str(), q.due), ("Call Sam", Some(Due::At(at(22, 9)))));
-        let google = Caps { date_only: true, alerts: false, repeat: false, priority: false };
+        let google = Caps { date_only: true, alerts: false, repeat: false, priority: false, tags: false };
         let q = parse_quick("Water plants every monday at 8", at(21, 10), google, None);
         assert_eq!(q.due, Some(Due::Day(NaiveDate::from_ymd_opt(2026, 10, 26).unwrap())));
         assert_eq!(q.repeat, None);
@@ -209,6 +218,17 @@ mod tests {
         let q = parse_quick("Buy milk", at(21, 10), full, Some(at(21, 0).date()));
         assert_eq!(q.due, Some(Due::Day(at(21, 0).date())));
         assert_eq!(q.title, "Buy milk");
+    }
+
+    #[test]
+    fn quick_add_takes_tags() {
+        let q = parse_quick("Pay rent #bills #Home tomorrow", at(21, 10), Caps::default(), None);
+        assert_eq!(q.title, "Pay rent");
+        assert_eq!(q.tags, ["bills", "Home"]);
+        let google = Caps { tags: false, ..Caps::default() };
+        let q = parse_quick("Pay rent #bills", at(21, 10), google, None);
+        assert!(q.tags.is_empty());
+        assert_eq!(q.dropped, vec!["tag"]);
     }
 
     #[test]

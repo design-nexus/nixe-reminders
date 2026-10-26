@@ -251,6 +251,7 @@ fn caps(list: Option<&Calendar>, backend: &str) -> Caps {
         alerts: !gtasks && !can("task-no-alarm"),
         repeat: !gtasks,
         priority: !gtasks,
+        tags: !gtasks,
     }
 }
 

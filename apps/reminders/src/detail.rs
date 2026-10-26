@@ -290,6 +290,31 @@ pub fn fill(panel: &gtk::Box, task: &Task, meta: &Meta, subtasks: &[Task]) {
         link.add_controller(focus);
     }
     panel.append(&labeled("Link", &link));
+    if caps.tags {
+        let tags = gtk::Entry::new();
+        tags.set_placeholder_text(Some("home, bills"));
+        tags.set_text(&task.tags.join(", "));
+        tags.set_tooltip_text(Some("Tags, separated by commas (also #tag when adding)"));
+        let t = task.clone();
+        let save = move |e: &gtk::Entry| {
+            let mut picked: Vec<String> = Vec::new();
+            for tag in e.text().split([',', ' ']).map(|t| t.trim().trim_start_matches('#')).filter(|t| !t.is_empty()) {
+                if !picked.iter().any(|p| p.eq_ignore_ascii_case(tag)) {
+                    picked.push(tag.to_string());
+                }
+            }
+            if picked != t.tags {
+                actions::save(&t, Draft { categories: Some(picked), ..Draft::default() });
+            }
+        };
+        let s = save.clone();
+        tags.connect_activate(move |e| s(e));
+        let focus = gtk::EventControllerFocus::new();
+        let e = tags.clone();
+        focus.connect_leave(move |_| save(&e));
+        tags.add_controller(focus);
+        panel.append(&labeled("Tags", &tags));
+    }
     if let Some(source) = meta.source.as_deref() {
         let open = widgets::icon_button("mail-unread-symbolic", "Open the message this came from");
         let uri = source.to_string();
@@ -327,7 +352,7 @@ pub fn fill(panel: &gtk::Box, task: &Task, meta: &Meta, subtasks: &[Task]) {
             }
             e.set_text("");
             let quick = actions::parse_quick(&text, actions::now(), caps, None);
-            let quick = Quick { title: quick.title, due: quick.due, repeat: None, dropped: Vec::new() };
+            let quick = Quick { title: quick.title, due: quick.due, repeat: None, tags: quick.tags, dropped: Vec::new() };
             actions::add(t.list.clone(), quick, Some(t.uid.clone()), None, |result| {
                 if let Err(err) = result {
                     window::toast(&err);

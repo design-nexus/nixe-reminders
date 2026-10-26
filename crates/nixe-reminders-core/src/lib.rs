@@ -21,12 +21,32 @@ pub struct Caps {
     pub alerts: bool,
     pub repeat: bool,
     pub priority: bool,
+    /// Tags (VTODO CATEGORIES).
+    pub tags: bool,
 }
 
 impl Default for Caps {
     fn default() -> Self {
-        Self { date_only: false, alerts: true, repeat: true, priority: true }
+        Self { date_only: false, alerts: true, repeat: true, priority: true, tags: true }
     }
+}
+
+/// Splits `#tag` words out of a line: the rest of the line, and the tags
+/// (without `#`, in order, without repeats).
+pub fn hashtags(text: &str) -> (String, Vec<String>) {
+    let mut tags: Vec<String> = Vec::new();
+    let mut rest = Vec::new();
+    for word in text.split_whitespace() {
+        match word.strip_prefix('#').map(|t| t.trim_end_matches([',', '.', ';', ':', '!', '?'])) {
+            Some(tag) if !tag.is_empty() && !tag.starts_with('#') => {
+                if !tags.iter().any(|t| t.eq_ignore_ascii_case(tag)) {
+                    tags.push(tag.to_string());
+                }
+            }
+            _ => rest.push(word),
+        }
+    }
+    (rest.join(" "), tags)
 }
 
 /// A task list in the sidebar.
@@ -90,6 +110,7 @@ pub struct Task {
     pub parent: Option<String>,
     pub rule: Option<String>,
     pub alarms: Vec<i64>,
+    pub tags: Vec<String>,
 }
 
 impl Task {
@@ -114,6 +135,7 @@ impl Task {
             parent: item.parent.clone(),
             rule: item.rule.clone(),
             alarms: item.alarms.clone(),
+            tags: item.categories.clone(),
         }
     }
 
@@ -302,6 +324,7 @@ mod tests {
             parent: None,
             rule: None,
             alarms: Vec::new(),
+            tags: Vec::new(),
         }
     }
 
@@ -388,6 +411,7 @@ mod tests {
             rule: None,
             has_alarms: false,
             alarms: Vec::new(),
+            categories: Vec::new(),
             organizer: None,
             attendees: Vec::new(),
         };
@@ -396,5 +420,11 @@ mod tests {
         assert_eq!(t.due, Some(Due::Day(d(30))));
         assert_eq!(t.parent.as_deref(), Some("p"));
         assert!(!t.done);
+    }
+
+    #[test]
+    fn hashtags_split_out() {
+        assert_eq!(hashtags("Call #work Sam #Work, #x"), ("Call Sam".into(), vec!["work".to_string(), "x".to_string()]));
+        assert_eq!(hashtags("Room # 5 and ##double"), ("Room # 5 and ##double".into(), Vec::<String>::new()));
     }
 }

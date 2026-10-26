@@ -288,7 +288,12 @@ fn page_tasks(u: &Ui) -> Vec<(usize, usize)> {
                 Page::Smart(s) => s.contains(t, u.meta.get(&t.key()), today),
                 Page::List(uid) => t.list == *uid && (show_done || !t.done),
             };
-            on_page && (query.is_empty() || t.title.to_lowercase().contains(&query) || t.notes.to_lowercase().contains(&query))
+            let tag = query.trim_start_matches('#');
+            on_page
+                && (query.is_empty()
+                    || t.title.to_lowercase().contains(&query)
+                    || t.notes.to_lowercase().contains(&query)
+                    || t.tags.iter().any(|g| g.to_lowercase().contains(tag)))
         })
         .collect();
     sort(&u.tasks, &mut picked, &u.meta);
@@ -455,6 +460,9 @@ fn task_row(
         l.set_hexpand(true);
         l.set_xalign(0.0);
         meta_line.append(&l);
+    }
+    for tag in &task.tags {
+        meta_line.append(&widgets::label(&format!("#{tag}"), "task-tag"));
     }
     if let Some(name) = list_name {
         let dot = gtk::DrawingArea::new();
@@ -660,6 +668,7 @@ fn placeholder() -> Task {
         parent: None,
         rule: None,
         alarms: Vec::new(),
+        tags: Vec::new(),
     }
 }
 

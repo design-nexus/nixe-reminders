@@ -70,6 +70,11 @@
   font-size: 0.88em;
 }
 
+.task-tag {
+  color: @theme_accent;
+  font-size: 0.88em;
+}
+
 .priority-high {
   color: @theme_danger;
   font-weight: 700;
