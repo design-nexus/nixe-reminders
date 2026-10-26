@@ -34,3 +34,7 @@
 - Shared crates come from nixe-core on GitHub, pinned by `rev` (Cargo.toml and
   Cargo.lock). To build against unpushed nixe-core changes, push them first and bump the
   rev; never commit a `file://` source (CI refuses it, and the one-line install can't fetch it).
+- A list's open reminders reorder by drag (`window::attach_drag`/`move_task` →
+  `Sidecar::reorder`); not on smart lists or while searching. Account groups in the
+  sidebar fold (prefs `collapsed_groups`). A banner shows for GOA `ms_graph`/`exchange`
+  accounts when evolution-ews's EDS backends are missing.

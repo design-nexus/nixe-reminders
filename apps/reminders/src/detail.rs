@@ -47,6 +47,7 @@ pub fn fill(panel: &gtk::Box, task: &Task, meta: &Meta, subtasks: &[Task]) {
 
     let title = gtk::Entry::new();
     title.add_css_class("detail-title");
+    title.update_property(&[gtk::accessible::Property::Label("Title")]);
     title.set_text(&task.title);
     title.set_sensitive(!read_only);
     {
@@ -68,6 +69,7 @@ pub fn fill(panel: &gtk::Box, task: &Task, meta: &Meta, subtasks: &[Task]) {
 
     let notes = gtk::TextView::new();
     notes.add_css_class("detail-notes");
+    notes.update_property(&[gtk::accessible::Property::Label("Notes")]);
     notes.set_wrap_mode(gtk::WrapMode::WordChar);
     notes.buffer().set_text(&task.notes);
     notes.set_editable(!read_only);
@@ -131,6 +133,7 @@ pub fn fill(panel: &gtk::Box, task: &Task, meta: &Meta, subtasks: &[Task]) {
     due_row.append(&date_button);
     let time = gtk::Entry::new();
     time.set_placeholder_text(Some("Time"));
+    time.update_property(&[gtk::accessible::Property::Label("Due time")]);
     time.set_width_chars(8);
     if let Some(Due::At(t)) = task.due {
         time.set_text(&actions::time_text(t.time()));
@@ -315,6 +318,7 @@ pub fn fill(panel: &gtk::Box, task: &Task, meta: &Meta, subtasks: &[Task]) {
         }
         let add = gtk::Entry::new();
         add.set_placeholder_text(Some("Add a subtask"));
+        add.update_property(&[gtk::accessible::Property::Label("Add a subtask")]);
         let t = task.clone();
         add.connect_activate(move |e| {
             let text = e.text().trim().to_string();
@@ -356,6 +360,7 @@ fn labeled(text: &str, widget: &impl IsA<gtk::Widget>) -> gtk::Box {
     label.set_width_chars(8);
     row.append(&label);
     widget.set_hexpand(true);
+    widget.as_ref().update_relation(&[gtk::accessible::Relation::LabelledBy(&[label.upcast_ref()])]);
     row.append(widget);
     row
 }

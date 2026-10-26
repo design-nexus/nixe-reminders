@@ -24,6 +24,8 @@ pub struct Prefs {
     pub timed_alert: Option<i64>,
     /// Reminders due on a day (no time) get an alert at `default_hour`.
     pub day_alerts: bool,
+    /// Accounts whose lists are folded away in the sidebar (by heading).
+    pub collapsed_groups: Vec<String>,
 }
 
 impl Default for Prefs {
@@ -40,6 +42,7 @@ impl Default for Prefs {
             default_hour: 9,
             timed_alert: Some(0),
             day_alerts: true,
+            collapsed_groups: Vec::new(),
         }
     }
 }

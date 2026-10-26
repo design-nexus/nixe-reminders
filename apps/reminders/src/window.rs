@@ -84,6 +84,8 @@ struct Ui {
     /// Row order on screen, for J/K.
     order: Vec<Key>,
     unavailable: Option<String>,
+    /// Online accounts whose task lists need a backend EDS doesn't have.
+    unsupported: Vec<String>,
     loaded: bool,
     refreshing: bool,
 }
@@ -209,6 +211,11 @@ pub fn apply(update: Update) {
             let mut u = ui.borrow_mut();
             u.unavailable = Some(text);
             u.loaded = true;
+        }
+        Update::Unsupported(accounts) => {
+            ui.borrow_mut().unsupported = accounts;
+            rebuild_banners();
+            return;
         }
         Update::Lists(lists) => {
             let mut u = ui.borrow_mut();
@@ -358,6 +365,10 @@ fn rebuild_page() {
             if matches!(page, Page::Smart(_)) { lists.iter().find(|l| l.uid == task.list).map(|l| l.name.clone()) } else { None };
         let color = lists.iter().find(|l| l.uid == task.list).and_then(|l| l.color.clone());
         let row = task_row(task, depth, meta.get(&task.key()), list_name, color, selected.as_ref() == Some(&task.key()), now);
+        // A list's open reminders reorder by dragging (not while searching).
+        if matches!(page, Page::List(_)) && !task.done && ui.borrow().search.text().trim().is_empty() {
+            attach_drag(&row, task.key());
+        }
         rows.append(&row);
         order.push(task.key());
     }
@@ -493,6 +504,55 @@ fn task_row(
     });
     ROWS.with(|r| r.borrow_mut().insert(task.key(), row.upcast_ref::<gtk::Widget>().downgrade()));
     row
+}
+
+/// Lets a row be dragged onto another to go before it (or after it, dropped on
+/// its lower half). The order is kept in the sidecar.
+fn attach_drag(row: &gtk::Box, key: (String, String)) {
+    let source = gtk::DragSource::new();
+    source.set_actions(gtk::gdk::DragAction::MOVE);
+    let dragged = format!("{}\u{1f}{}", key.0, key.1);
+    source.connect_prepare(move |_, _, _| Some(gtk::gdk::ContentProvider::for_value(&dragged.to_value())));
+    let r = row.clone();
+    source.connect_drag_begin(move |s, _| {
+        s.set_icon(Some(&gtk::WidgetPaintable::new(Some(&r))), 0, 0);
+    });
+    row.add_controller(source);
+
+    let target = gtk::DropTarget::new(glib::Type::STRING, gtk::gdk::DragAction::MOVE);
+    let r = row.clone();
+    target.connect_drop(move |_, value, _, y| {
+        let Some((list, uid)) = value.get::<String>().ok().and_then(|v| v.split_once('\u{1f}').map(|(l, u)| (l.to_string(), u.to_string())))
+        else {
+            return false;
+        };
+        let after = y > r.height() as f64 / 2.0;
+        move_task((list, uid), &key, after);
+        true
+    });
+    row.add_controller(target);
+}
+
+/// Puts `moved` before (or after) `onto` in the shown order of its list.
+fn move_task(moved: (String, String), onto: &(String, String), after: bool) {
+    let Some(ui) = ui() else { return };
+    if moved == *onto || moved.0 != onto.0 {
+        return;
+    }
+    let mut order: Vec<(String, String)> = ui.borrow().order.iter().filter(|k| k.0 == moved.0 && **k != moved).cloned().collect();
+    let Some(at) = order.iter().position(|k| k == onto) else { return };
+    order.insert(if after { at + 1 } else { at }, moved);
+    let saved = {
+        let mut u = ui.borrow_mut();
+        let saved = u.sidecar.as_mut().map(|s| s.reorder(&order));
+        u.meta = u.sidecar.as_ref().and_then(|s| s.all().ok()).unwrap_or_default();
+        saved
+    };
+    if let Some(Err(err)) = saved {
+        toast(&format!("Couldn't save the order: {err}"));
+    }
+    // After the drop finishes: rebuilding removes the rows it came through.
+    glib::idle_add_local_once(rebuild_page);
 }
 
 /// The selected reminder's menu (the Menu key), at its row.
@@ -693,6 +753,15 @@ fn rebuild_banners() {
     if let Some(text) = &u.unavailable {
         banners.append(&widgets::banner(&glib::markup_escape_text(text), true));
     }
+    for account in &u.unsupported {
+        banners.append(&widgets::banner(
+            &format!(
+                "<b>{}</b>: its task lists need the Microsoft 365 backends for Evolution Data Server (the evolution-ews-backends or evolution-ews package).",
+                glib::markup_escape_text(account)
+            ),
+            true,
+        ));
+    }
     let mut asked = Vec::new();
     for list in u.lists.iter().filter(|l| l.needs_sign_in) {
         let group = list.group_label().to_string();
@@ -783,13 +852,14 @@ fn list_button(list: &ListInfo, count: usize, active: bool) -> gtk::Button {
     button
 }
 
-fn group_label(text: &str, first: bool, add: bool) -> gtk::Widget {
+/// A group heading; `folded` is set for an account's, which folds its lists away.
+fn group_label(text: &str, first: bool, add: bool, folded: Option<bool>) -> gtk::Widget {
     let label = widgets::label(&text.to_uppercase(), "nav-group");
     label.add_css_class("compact-hide");
     if first {
         label.add_css_class("first");
     }
-    if !add {
+    if !add && folded.is_none() {
         return label.upcast();
     }
     let row = gtk::Box::new(gtk::Orientation::Horizontal, 0);
@@ -797,13 +867,41 @@ fn group_label(text: &str, first: bool, add: bool) -> gtk::Widget {
     label.set_hexpand(true);
     label.set_xalign(0.0);
     row.append(&label);
-    let plus = widgets::icon_button("list-add-symbolic", "Add an account");
-    plus.add_css_class("flat");
-    plus.add_css_class("nav-group-add");
-    plus.set_valign(gtk::Align::End);
-    plus.connect_clicked(|_| open_online_accounts());
-    row.append(&plus);
+    if add {
+        let plus = widgets::icon_button("list-add-symbolic", "Add an account");
+        plus.add_css_class("flat");
+        plus.add_css_class("nav-group-add");
+        plus.set_valign(gtk::Align::End);
+        plus.connect_clicked(|_| open_online_accounts());
+        row.append(&plus);
+    }
+    if let Some(folded) = folded {
+        let (icon, tip) = if folded { ("pan-end-symbolic", "Show its lists") } else { ("pan-down-symbolic", "Hide its lists") };
+        let fold = widgets::icon_button(icon, tip);
+        fold.add_css_class("flat");
+        fold.add_css_class("nav-group-add");
+        fold.set_valign(gtk::Align::End);
+        let key = text.to_string();
+        fold.connect_clicked(move |_| toggle_group_folded(&key));
+        row.append(&fold);
+        let click = gtk::GestureClick::new();
+        let key = text.to_string();
+        click.connect_released(move |_, _, _, _| toggle_group_folded(&key));
+        label.add_controller(click);
+    }
     row.upcast()
+}
+
+/// Folds or unfolds an account's lists in the sidebar.
+pub(crate) fn toggle_group_folded(key: &str) {
+    prefs::update(|p| {
+        if p.collapsed_groups.iter().any(|g| g == key) {
+            p.collapsed_groups.retain(|g| g != key);
+        } else {
+            p.collapsed_groups.push(key.to_string());
+        }
+    });
+    rebuild_nav();
 }
 
 pub(crate) fn rebuild_nav() {
@@ -816,7 +914,7 @@ pub(crate) fn rebuild_nav() {
         let u = ui.borrow();
         (u.page.clone(), u.lists.clone(), u.tasks.clone())
     };
-    list_box.append(&group_label("Smart lists", true, false));
+    list_box.append(&group_label("Smart lists", true, false, None));
     for (smart, icon, key) in [
         (Smart::Today, "x-office-calendar-symbolic", "1"),
         (Smart::Scheduled, "alarm-symbolic", "2"),
@@ -839,8 +937,13 @@ pub(crate) fn rebuild_nav() {
             None => groups.push((label, vec![list])),
         }
     }
+    let folded_groups = prefs::get().collapsed_groups;
     for (i, (label, items)) in groups.iter().enumerate() {
-        list_box.append(&group_label(label, false, i == 0));
+        let folded = folded_groups.contains(label);
+        list_box.append(&group_label(label, false, i == 0, Some(folded)));
+        if folded {
+            continue;
+        }
         for list in items {
             let open = tasks.iter().filter(|t| t.list == list.uid && !t.done).count();
             list_box.append(&list_button(list, open, page == Page::List(list.uid.clone())));
@@ -895,6 +998,7 @@ fn build(app: &gtk::Application) {
 
     let search = gtk::SearchEntry::new();
     search.set_placeholder_text(Some("Find reminders"));
+    search.update_property(&[gtk::accessible::Property::Label("Find reminders")]);
     search.set_visible(false);
     search.connect_search_changed(|_| refresh_page());
     search.connect_stop_search(|entry| {
@@ -931,6 +1035,7 @@ fn build(app: &gtk::Application) {
     let quick = gtk::Entry::new();
     quick.add_css_class("quick-add");
     quick.set_placeholder_text(Some("Add a reminder — “Call Sam tomorrow at 9”"));
+    quick.update_property(&[gtk::accessible::Property::Label("Add a reminder")]);
     quick.set_primary_icon_name(Some("list-add-symbolic"));
     let quick_note = widgets::label("", "quick-note");
     quick_note.set_xalign(0.0);
@@ -1046,6 +1151,7 @@ fn build(app: &gtk::Application) {
         shown_detail: None,
         order: Vec::new(),
         unavailable: None,
+        unsupported: Vec::new(),
         loaded: false,
         refreshing: false,
     };

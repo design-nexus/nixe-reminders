@@ -11,6 +11,9 @@ use std::sync::OnceLock;
 #[derive(Debug)]
 pub enum Update {
     Unavailable(String),
+    /// Online accounts whose task lists EDS can't load: its backend for them
+    /// isn't installed.
+    Unsupported(Vec<String>),
     Lists(Vec<ListInfo>),
     /// Every task of every list, and which lists loaded (others are offline or failed).
     Tasks {
@@ -164,6 +167,7 @@ fn connect() {
                 s.accounts = accounts;
             });
             load();
+            send_unsupported();
             poll_online();
         }
         Err(err) => {
@@ -193,7 +197,34 @@ fn schedule_lists() {
     after(std::time::Duration::from_millis(250), || {
         PENDING_LISTS.with(|p| p.set(false));
         load();
+        send_unsupported();
     });
+}
+
+/// Microsoft accounts (GOA `ms_graph`, `exchange`) need evolution-ews's EDS
+/// backends, which plain evolution-data-server doesn't have.
+fn send_unsupported() {
+    let installed = |name: &str| {
+        ["/usr/lib", "/usr/lib64", "/usr/local/lib"]
+            .iter()
+            .any(|dir| std::path::Path::new(&format!("{dir}/evolution-data-server/calendar-backends/{name}")).exists())
+    };
+    let mut missing = Vec::new();
+    STATE.with(|s| {
+        let s = s.borrow();
+        let Some(client) = &s.accounts else { return };
+        for account in client.list().unwrap_or_default() {
+            let backend = match account.provider_type.as_str() {
+                "ms_graph" => "libecalbackendmicrosoft365.so",
+                "exchange" => "libecalbackendews.so",
+                _ => continue,
+            };
+            if !installed(backend) {
+                missing.push(account.label().to_string());
+            }
+        }
+    });
+    send(Update::Unsupported(missing));
 }
 
 fn schedule_tasks() {
