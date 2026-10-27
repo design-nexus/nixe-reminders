@@ -1,8 +1,8 @@
-id = "nixe-reminders"
+id = "nyx-reminders"
 name = "Reminders"
 version = "0.1.0"
 api_version = 1
-exec = ["./nixe-reminders-glimpse"]
+exec = ["./nyx-reminders-glimpse"]
 capabilities = ["search", "preview"]
 description = "Your reminders. Try reminders, today, flagged, words from a reminder, or remind me to … to add one."
 

@@ -15,9 +15,9 @@ mod worker;
 use gtk::prelude::*;
 use gtk::{gio, glib};
 
-pub const APP_ID: &str = "io.github.design_nexus.nixe.Reminders";
+pub const APP_ID: &str = "io.github.design_nexus.nyx.Reminders";
 
-const USAGE: &str = "Usage: nixe-reminders [OPTIONS]\n\
+const USAGE: &str = "Usage: nyx-reminders [OPTIONS]\n\
 \n\
   --section ID    open today, scheduled, flagged, all, completed, list:UID or settings\n\
   --add TEXT      add a reminder from words (\"Call Sam tomorrow at 9\")\n\
@@ -30,10 +30,10 @@ fn start_alerts() {
     if std::env::var_os("REMINDERS_SNAPSHOT").is_some() {
         return;
     }
-    let unit = nixe_core::paths::config_home().join("systemd/user/nixe-remindersd.service");
+    let unit = nyx_core::paths::config_home().join("systemd/user/nyx-remindersd.service");
     if unit.exists() {
         let _ = std::process::Command::new("systemctl")
-            .args(["--user", "start", "--no-block", "nixe-remindersd.service"])
+            .args(["--user", "start", "--no-block", "nyx-remindersd.service"])
             .stdout(std::process::Stdio::null())
             .stderr(std::process::Stdio::null())
             .spawn();
@@ -53,13 +53,13 @@ fn add_when_ready(text: String, tries: u32) {
 }
 
 fn main() -> glib::ExitCode {
-    nixe_core::app::init(nixe_core::app::App { slug: "nixe-reminders", name: "Reminders" });
+    nyx_core::app::init(nyx_core::app::App { slug: "nyx-reminders", name: "Reminders" });
     let args: Vec<String> = std::env::args().collect();
     if args.iter().any(|a| a == "--help" || a == "-h") {
         print!("{USAGE}");
         return glib::ExitCode::SUCCESS;
     }
-    // The control tools as JSON, without a window (Nixe Assistant's abilities).
+    // The control tools as JSON, without a window (Nyx Assistant's abilities).
     if args.iter().any(|a| a == "--describe") {
         println!("{}", control::tools());
         return glib::ExitCode::SUCCESS;
@@ -71,7 +71,7 @@ fn main() -> glib::ExitCode {
     let app = gtk::Application::builder().application_id(APP_ID).flags(gio::ApplicationFlags::HANDLES_COMMAND_LINE).build();
     app.connect_startup(|app| {
         theme::install();
-        nixe_core::control::serve_async(app, control::tools(), control::handle);
+        nyx_core::control::serve_async(app, control::tools(), control::handle);
         start_alerts();
     });
     app.connect_command_line(|app, cl| {

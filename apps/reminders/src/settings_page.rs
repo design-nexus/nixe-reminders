@@ -18,7 +18,7 @@ pub fn build(page: &Page) {
 
 fn window_group(page: &Page) {
     let group = page.group("Reminders window");
-    group.add(&nixe_ui::widgets::start_row());
+    group.add(&nyx_ui::widgets::start_row());
     let prefs = prefs::get();
     let options: Vec<(String, String)> = theme::all().iter().map(|t| (t.id.clone(), t.name.clone())).collect();
     let (theme_row, theme_dd) =
@@ -135,7 +135,7 @@ fn fill_lists(list: &gtk::Box) {
         while let Some(child) = list.first_child() {
             list.remove(&child);
         }
-        let mut groups: Vec<(String, Vec<(nixe_eds::Source, bool)>)> = Vec::new();
+        let mut groups: Vec<(String, Vec<(nyx_eds::Source, bool)>)> = Vec::new();
         for (source, on) in all {
             let label = source.group.clone().unwrap_or_else(|| "On this computer".into());
             match groups.iter_mut().find(|(g, _)| *g == label) {

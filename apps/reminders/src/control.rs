@@ -1,5 +1,5 @@
-//! Reminders' tools on the control interface (`nixe_core::control`), for Nixe
-//! Assistant and other Nixe apps (Mail's "Remind me"): list, read and search
+//! Reminders' tools on the control interface (`nyx_core::control`), for Nyx
+//! Assistant and other Nyx apps (Mail's "Remind me"): list, read and search
 //! reminders, and add, complete, change or delete them. Assistant asks before
 //! anything that changes a list; task text is returned as untrusted content.
 
@@ -7,9 +7,9 @@ use crate::actions::{self, Quick};
 use crate::window;
 use crate::worker;
 use chrono::{DateTime, Local, NaiveDate, NaiveDateTime};
-use nixe_core::control::{Reply, text};
-use nixe_eds::{Draft, Scope};
-use nixe_reminders_core::{Due, Smart, Task};
+use nyx_core::control::{Reply, text};
+use nyx_eds::{Draft, Scope};
+use nyx_reminders_core::{Due, Smart, Task};
 use serde_json::{Value, json};
 
 const MAX_TASKS: usize = 200;
@@ -22,7 +22,7 @@ pub fn tools() -> Value {
         {"name": "reminders.today", "description": "Reminders due today or overdue.", "inputSchema": {"type": "object", "properties": {}}},
         {"name": "reminders.list", "description": "Open reminders in a list (by uid from reminders.lists), or every open one; done ones too when asked.", "inputSchema": {"type": "object", "properties": {"list": {"type": "string"}, "include_done": {"type": "boolean"}}}},
         {"name": "reminders.search", "description": "Reminders whose title or notes contain the words.", "inputSchema": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}},
-        {"name": "reminders.create", "description": "Add a reminder. The title may say when (\"Call Sam tomorrow at 9\"); due overrides it.", "inputSchema": {"type": "object", "properties": {"title": {"type": "string"}, "due": due, "notes": {"type": "string"}, "list": {"type": "string"}, "source": {"type": "string", "description": "A link back to what it's about, such as a nixe-mail: message"}}, "required": ["title"]}},
+        {"name": "reminders.create", "description": "Add a reminder. The title may say when (\"Call Sam tomorrow at 9\"); due overrides it.", "inputSchema": {"type": "object", "properties": {"title": {"type": "string"}, "due": due, "notes": {"type": "string"}, "list": {"type": "string"}, "source": {"type": "string", "description": "A link back to what it's about, such as a nyx-mail: message"}}, "required": ["title"]}},
         {"name": "reminders.complete", "description": "Mark a reminder done (a repeating one moves to its next date), or not done with done=false.", "inputSchema": {"type": "object", "properties": {"list": {"type": "string"}, "uid": {"type": "string"}, "done": {"type": "boolean"}}, "required": ["list", "uid"]}},
         {"name": "reminders.edit", "description": "Change a reminder's title, notes or due date.", "inputSchema": {"type": "object", "properties": {"list": {"type": "string"}, "uid": {"type": "string"}, "title": {"type": "string"}, "notes": {"type": "string"}, "due": due}, "required": ["list", "uid"]}},
         {"name": "reminders.delete", "description": "Delete a reminder.", "inputSchema": {"type": "object", "properties": {"list": {"type": "string"}, "uid": {"type": "string"}}, "required": ["list", "uid"]}},
@@ -172,7 +172,7 @@ fn due_arg(text: &str) -> Option<Due> {
     if let Ok(day) = text.parse::<NaiveDate>() {
         return Some(Due::Day(day));
     }
-    let parse = nixe_when::parse(text, actions::now());
+    let parse = nyx_when::parse(text, actions::now());
     match (parse.date, parse.start) {
         (Some(d), Some(t)) => Some(Due::At(d.and_time(t))),
         (Some(d), None) => Some(Due::Day(d)),

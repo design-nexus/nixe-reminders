@@ -1,7 +1,7 @@
 [package]
-name = "nixe-reminders-core"
+name = "nyx-reminders-core"
 version = "0.1.1"
-description = "Tasks, smart lists and local metadata for Nixe Reminders"
+description = "Tasks, smart lists and local metadata for Nyx Reminders"
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
@@ -9,5 +9,5 @@ repository.workspace = true
 
 [dependencies]
 chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
-nixe-eds = { git = "https://github.com/design-nexus/nixe-core.git", rev = "5a7166bfc21a5cf86b009d4f604f048eea5f8cf6" }
+nyx-eds = { git = "https://github.com/design-nexus/nyx-core.git", rev = "52cba5e27a3dd5f00c780f53e423302b4b5f9c9c" }
 rusqlite = { version = "0.40", features = ["bundled"] }

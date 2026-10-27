@@ -11,7 +11,7 @@ pub struct Meta {
     pub flagged: bool,
     /// Manual order within lists; `None` sorts by due date.
     pub position: Option<i64>,
-    /// A link to what the task came from (a Mail message, `nixe-mail:` URI).
+    /// A link to what the task came from (a Mail message, `nyx-mail:` URI).
     pub source: Option<String>,
 }
 
@@ -106,16 +106,16 @@ mod tests {
 
     #[test]
     fn flags_order_and_prune() {
-        let dir = std::env::temp_dir().join(format!("nixe-reminders-sidecar-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("nyx-reminders-sidecar-{}", std::process::id()));
         let path = dir.join("reminders.sqlite");
         let mut s = Sidecar::open(&path).unwrap();
         s.set(&key("l", "a"), &Meta { flagged: true, ..Meta::default() }).unwrap();
-        s.set(&key("l", "b"), &Meta { source: Some("nixe-mail:1".into()), ..Meta::default() }).unwrap();
+        s.set(&key("l", "b"), &Meta { source: Some("nyx-mail:1".into()), ..Meta::default() }).unwrap();
         s.reorder(&[key("l", "b"), key("l", "a"), key("m", "c")]).unwrap();
         let all = s.all().unwrap();
         assert!(all[&key("l", "a")].flagged);
         assert_eq!(all[&key("l", "a")].position, Some(1));
-        assert_eq!(all[&key("l", "b")].source.as_deref(), Some("nixe-mail:1"));
+        assert_eq!(all[&key("l", "b")].source.as_deref(), Some("nyx-mail:1"));
 
         // Clearing everything removes the row.
         s.set(&key("m", "c"), &Meta::default()).unwrap();

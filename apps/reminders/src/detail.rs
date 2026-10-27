@@ -6,8 +6,8 @@ use crate::widgets;
 use crate::window;
 use chrono::{Datelike, NaiveDate, NaiveTime};
 use gtk::prelude::*;
-use nixe_eds::Draft;
-use nixe_reminders_core::{Due, Level, Meta, Task};
+use nyx_eds::Draft;
+use nyx_reminders_core::{Due, Level, Meta, Task};
 use std::rc::Rc;
 
 pub const WIDTH: i32 = 300;
@@ -33,7 +33,7 @@ fn parse_time(text: &str) -> Option<NaiveTime> {
     if t.is_empty() {
         return None;
     }
-    nixe_when::parse(&format!("at {t}"), actions::now()).start
+    nyx_when::parse(&format!("at {t}"), actions::now()).start
 }
 
 /// Builds the panel for `task` into `panel` (emptied first).

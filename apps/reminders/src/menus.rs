@@ -6,8 +6,8 @@ use crate::widgets::{self, MenuEntry, danger, item, keyed, separator, sub};
 use crate::{actions, prefs, window, worker};
 use chrono::{Datelike, Duration};
 use gtk::prelude::*;
-use nixe_eds::Draft;
-use nixe_reminders_core::{Due, ListInfo, Task};
+use nyx_eds::Draft;
+use nyx_reminders_core::{Due, ListInfo, Task};
 
 /// Moves a reminder to another day, keeping its time when it has one.
 fn due_on(task: &Task, day: chrono::NaiveDate) -> Due {

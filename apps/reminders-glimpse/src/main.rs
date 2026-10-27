@@ -1,5 +1,5 @@
 //! Glimpse plugin for Reminders. It reads `tasks.sqlite` (written by
-//! nixe-remindersd; Glimpse mounts it read-only into the sandbox) and never
+//! nyx-remindersd; Glimpse mounts it read-only into the sandbox) and never
 //! reaches the task lists themselves.
 //!
 //! `reminders` lists what's open (soonest due first), `today` what's due today
@@ -26,13 +26,13 @@ fn main() {
 }
 
 fn database() -> PathBuf {
-    if let Some(path) = std::env::var_os("NIXE_REMINDERS_DB") {
+    if let Some(path) = std::env::var_os("NYX_REMINDERS_DB") {
         return PathBuf::from(path);
     }
     let data = std::env::var_os("XDG_DATA_HOME")
         .map(PathBuf::from)
         .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".local/share")));
-    data.unwrap_or_else(|| PathBuf::from(".local/share")).join("nixe-reminders/tasks.sqlite")
+    data.unwrap_or_else(|| PathBuf::from(".local/share")).join("nyx-reminders/tasks.sqlite")
 }
 
 fn open() -> Result<Connection> {

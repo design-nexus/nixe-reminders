@@ -2,15 +2,15 @@
 
 ```mermaid
 flowchart LR
-  UI[nixe-reminders] --> Eds[nixe-eds]
-  Remd[nixe-remindersd] --> Eds
+  UI[nyx-reminders] --> Eds[nyx-eds]
+  Remd[nyx-remindersd] --> Eds
   Eds --> Reg[evolution-source-registry]
-  UI --> When[nixe-when]
+  UI --> When[nyx-when]
   UI --> Side[(reminders.sqlite)]
   Remd --> Tasks[(tasks.sqlite)]
   Glimpse[reminders-glimpse] -.read only.-> Tasks
   UI -->|Control| Assistant
-  Mail[Nixe Mail] -->|Control reminders.create| UI
+  Mail[Nyx Mail] -->|Control reminders.create| UI
 ```
 
 ## Where each field lives
@@ -41,9 +41,9 @@ never written to a backend that would drop it.
 Built from `ECalClient` queries over every enabled task list: Today (due today or
 overdue), Scheduled (has a due date), Flagged (sidecar), All (not completed), Completed.
 
-## `nixe-remindersd`
+## `nyx-remindersd`
 
-A GTK-free user service: `EReminderWatcher` (task lists only; calendar alerts are Nixe
+A GTK-free user service: `EReminderWatcher` (task lists only; calendar alerts are Nyx
 Calendar's), notifications with Complete, Snooze and Dismiss, and `tasks.sqlite` (every
 open task) for Glimpse.
 

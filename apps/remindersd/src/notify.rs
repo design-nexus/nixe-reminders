@@ -3,14 +3,14 @@
 
 use chrono::{DateTime, Local};
 use gio::prelude::*;
-use nixe_eds::Reminder;
+use nyx_eds::Reminder;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
 const NOTIFICATIONS: &str = "org.freedesktop.Notifications";
 const PATH: &str = "/org/freedesktop/Notifications";
-const ICON: &str = "io.github.design_nexus.nixe.Reminders";
+const ICON: &str = "io.github.design_nexus.nyx.Reminders";
 /// NotificationClosed reason: dismissed by the user.
 const CLOSED_BY_USER: u32 = 2;
 
@@ -46,7 +46,7 @@ impl Notifier {
                             });
                         }
                         "default" | "open" => {
-                            let _ = std::process::Command::new("nixe-reminders").args(["--section", "today"]).spawn();
+                            let _ = std::process::Command::new("nyx-reminders").args(["--section", "today"]).spawn();
                         }
                         _ => crate::with_reminders(|r| {
                             let _ = r.dismiss(&reminder);
@@ -107,7 +107,7 @@ impl Notifier {
                 Some((id,)) => {
                     shown.borrow_mut().insert(id, reminder);
                 }
-                None => eprintln!("nixe-calendard: couldn't show a notification"),
+                None => eprintln!("nyx-calendard: couldn't show a notification"),
             },
         );
     }
@@ -119,7 +119,7 @@ fn body(reminder: &Reminder, now: i64) -> String {
     let mut parts = Vec::new();
     let today = Local::now().date_naive();
     match reminder.item.due {
-        Some(nixe_eds::When::Time(due)) => {
+        Some(nyx_eds::When::Time(due)) => {
             let at = DateTime::from_timestamp(due, 0).map(|t| t.with_timezone(&Local));
             let clock = at
                 .map(|t| if twelve_hour() { t.format("%-I:%M %p").to_string() } else { t.format("%H:%M").to_string() })
@@ -132,7 +132,7 @@ fn body(reminder: &Reminder, now: i64) -> String {
                 format!("Due at {clock}")
             });
         }
-        Some(nixe_eds::When::Date { year, month, day }) => {
+        Some(nyx_eds::When::Date { year, month, day }) => {
             let date = chrono::NaiveDate::from_ymd_opt(year, month, day);
             parts.push(match date {
                 Some(d) if d == today => "Due today".to_string(),

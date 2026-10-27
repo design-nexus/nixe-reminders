@@ -10,9 +10,9 @@ use crate::worker::{self, Update};
 use gtk::gdk;
 use gtk::glib;
 use gtk::prelude::*;
-use nixe_reminders_core::{Caps, Level, ListInfo, Meta, Sidecar, Smart, Task, sort, tree};
-use nixe_theme::Rgb;
-use nixe_ui::chrome;
+use nyx_reminders_core::{Caps, Level, ListInfo, Meta, Sidecar, Smart, Task, sort, tree};
+use nyx_theme::Rgb;
+use nyx_ui::chrome;
 use std::cell::{Cell, RefCell};
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
@@ -142,7 +142,7 @@ pub fn present(app: &gtk::Application, section: Option<&str>) {
     if first {
         build(app);
         worker::start();
-        let start = nixe_theme::start_page("today", &prefs::get().last_section);
+        let start = nyx_theme::start_page("today", &prefs::get().last_section);
         show_page(Page::from_id(&start));
     }
     let Some(ui) = ui() else { return };
@@ -470,7 +470,7 @@ fn task_row(
         dot.set_content_height(8);
         dot.set_valign(gtk::Align::Center);
         dot.set_draw_func(move |_, cr, _, _| {
-            let c = color.as_deref().map(Rgb::hex).unwrap_or_else(|| Rgb::hex(&nixe_theme::palette().accent));
+            let c = color.as_deref().map(Rgb::hex).unwrap_or_else(|| Rgb::hex(&nyx_theme::palette().accent));
             cr.set_source_rgb(c.0, c.1, c.2);
             cr.arc(4.0, 4.0, 3.5, 0.0, std::f64::consts::TAU);
             let _ = cr.fill();
@@ -742,11 +742,11 @@ fn refresh_status() {
 }
 
 pub fn open_online_accounts() {
-    let settings = nixe_accounts::find_bin("nixe-settings");
+    let settings = nyx_accounts::find_bin("nyx-settings");
     let started =
         settings.is_some_and(|bin| std::process::Command::new(bin).args(["--section", "online-accounts"]).spawn().is_ok());
-    if !started && nixe_accounts::open_management().is_err() {
-        toast("Install Nixe Settings or gnome-online-accounts-gtk to add accounts.");
+    if !started && nyx_accounts::open_management().is_err() {
+        toast("Install Nyx Settings or gnome-online-accounts-gtk to add accounts.");
     }
 }
 
@@ -830,7 +830,7 @@ fn list_button(list: &ListInfo, count: usize, active: bool) -> gtk::Button {
     swatch.set_valign(gtk::Align::Center);
     let color = list.color.clone();
     swatch.set_draw_func(move |_, cr, w, h| {
-        let c = color.as_deref().map(Rgb::hex).unwrap_or_else(|| Rgb::hex(&nixe_theme::palette().accent));
+        let c = color.as_deref().map(Rgb::hex).unwrap_or_else(|| Rgb::hex(&nyx_theme::palette().accent));
         cr.set_source_rgb(c.0, c.1, c.2);
         cr.arc(w as f64 / 2.0, h as f64 / 2.0, 6.0, 0.0, std::f64::consts::TAU);
         let _ = cr.fill();
@@ -977,10 +977,10 @@ fn build(app: &gtk::Application) {
         gtk::ApplicationWindow::builder().application(app).title("Reminders").default_width(1120).default_height(800).build();
     window.add_css_class("reminders-window");
     window.set_titlebar(Some(&gtk::Box::new(gtk::Orientation::Horizontal, 0)));
-    window.set_icon_name(Some("io.github.design_nexus.nixe.Reminders"));
-    nixe_ui::keys::install(
+    window.set_icon_name(Some("io.github.design_nexus.nyx.Reminders"));
+    nyx_ui::keys::install(
         &window,
-        nixe_ui::keys::Common {
+        nyx_ui::keys::Common {
             settings: Some(settings_dialog::open),
             shortcuts: Some(show_shortcuts),
             close: true,
@@ -1053,12 +1053,12 @@ fn build(app: &gtk::Application) {
         let note = quick_note.clone();
         quick.connect_changed(move |e| {
             let text = e.text().to_string();
-            let parse = nixe_when::parse(&text, actions::now());
+            let parse = nyx_when::parse(&text, actions::now());
             let mut parts = Vec::new();
             if let Some(date) = parse.date {
                 let due = match parse.start {
-                    Some(t) => nixe_reminders_core::Due::At(date.and_time(t)),
-                    None => nixe_reminders_core::Due::Day(date),
+                    Some(t) => nyx_reminders_core::Due::At(date.and_time(t)),
+                    None => nyx_reminders_core::Due::Day(date),
                 };
                 parts.push(actions::due_text(due, actions::now()));
             }
@@ -1132,10 +1132,10 @@ fn build(app: &gtk::Application) {
     window.set_child(Some(&overlay));
     install_keys(&window, &search, &quick);
 
-    let sidecar = match Sidecar::open(&nixe_core::paths::data_dir().join("reminders.sqlite")) {
+    let sidecar = match Sidecar::open(&nyx_core::paths::data_dir().join("reminders.sqlite")) {
         Ok(s) => Some(s),
         Err(e) => {
-            eprintln!("nixe-reminders: flags won't be saved: {e}");
+            eprintln!("nyx-reminders: flags won't be saved: {e}");
             None
         }
     };
@@ -1379,7 +1379,7 @@ pub fn toast_undo(message: &str, undo: impl Fn() + 'static) {
 
 fn show_toast(message: &str, undo: Option<Box<dyn Fn()>>) {
     let Some(ui) = ui() else {
-        eprintln!("nixe-reminders: {message}");
+        eprintln!("nyx-reminders: {message}");
         return;
     };
     let overlay = ui.borrow().overlay.clone();

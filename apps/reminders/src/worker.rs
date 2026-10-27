@@ -2,8 +2,8 @@
 //! lists, runs its own GLib main context so EDS signals arrive there, and hands
 //! plain data to the window on the GTK thread.
 
-use nixe_eds::{Calendar, Kind, Registry, View, Watch};
-use nixe_reminders_core::{Caps, ListInfo, Task};
+use nyx_eds::{Calendar, Kind, Registry, View, Watch};
+use nyx_reminders_core::{Caps, ListInfo, Task};
 use std::cell::{Cell, RefCell};
 use std::collections::{HashMap, HashSet};
 use std::sync::OnceLock;
@@ -27,7 +27,7 @@ pub enum Update {
 struct State {
     registry: Option<Registry>,
     _watch: Option<Watch>,
-    accounts: Option<nixe_accounts::Client>,
+    accounts: Option<nyx_accounts::Client>,
     open: HashMap<String, Calendar>,
     views: HashMap<String, View>,
     sent: Vec<ListInfo>,
@@ -68,7 +68,7 @@ pub fn ask<T: Send + 'static>(work: impl FnOnce() -> T + Send + 'static, reply: 
 }
 
 /// Runs `f` with an open task list (opening it if needed). For use inside [`ask`].
-pub fn with_list<T>(uid: &str, f: impl FnOnce(&Calendar) -> Result<T, nixe_eds::Error>) -> Result<T, String> {
+pub fn with_list<T>(uid: &str, f: impl FnOnce(&Calendar) -> Result<T, nyx_eds::Error>) -> Result<T, String> {
     STATE.with(|s| {
         let mut s = s.borrow_mut();
         let state = &mut *s;
@@ -83,7 +83,7 @@ pub fn with_list<T>(uid: &str, f: impl FnOnce(&Calendar) -> Result<T, nixe_eds::
 
 /// Asks every open list to sync with its server now; replies with problems.
 fn registry_call(
-    work: impl FnOnce(&Registry) -> Result<(), nixe_eds::Error> + Send + 'static,
+    work: impl FnOnce(&Registry) -> Result<(), nyx_eds::Error> + Send + 'static,
     reply: impl FnOnce(Result<(), String>) + 'static,
 ) {
     ask(
@@ -110,7 +110,7 @@ pub fn set_color(uid: String, color: String, reply: impl FnOnce(Result<(), Strin
 }
 
 /// Every task list, with whether it's switched on (Settings → Task lists).
-pub fn all_lists(reply: impl FnOnce(Vec<(nixe_eds::Source, bool)>) + 'static) {
+pub fn all_lists(reply: impl FnOnce(Vec<(nyx_eds::Source, bool)>) + 'static) {
     ask(|| STATE.with(|s| s.borrow().registry.as_ref().map(|r| r.all_sources(Kind::TaskList)).unwrap_or_default()), reply);
 }
 
@@ -156,7 +156,7 @@ fn connect() {
     match Registry::connect() {
         Ok(registry) => {
             let watch = registry.watch(schedule_lists);
-            let accounts = nixe_accounts::Client::connect().ok();
+            let accounts = nyx_accounts::Client::connect().ok();
             if let Some(client) = &accounts {
                 client.watch(schedule_lists);
             }

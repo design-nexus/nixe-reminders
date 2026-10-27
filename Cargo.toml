@@ -1,12 +1,12 @@
 [workspace]
 resolver = "3"
-members = ["apps/reminders", "apps/reminders-glimpse", "apps/remindersd", "crates/nixe-reminders-core"]
+members = ["apps/reminders", "apps/reminders-glimpse", "apps/remindersd", "crates/nyx-reminders-core"]
 
 [workspace.package]
 edition = "2024"
 license = "MIT"
 authors = ["Ken Smith"]
-repository = "https://github.com/design-nexus/nixe-reminders"
+repository = "https://github.com/design-nexus/nyx-reminders"
 
 [profile.release]
 lto = "thin"

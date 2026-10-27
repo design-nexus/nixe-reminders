@@ -1,24 +1,24 @@
-//! nixe-remindersd: Reminders' background service. It turns due alerts from
+//! nyx-remindersd: Reminders' background service. It turns due alerts from
 //! task lists into desktop notifications (with Complete, Snooze and Dismiss)
 //! and keeps `tasks.sqlite` current for Glimpse. No GTK.
 //!
-//! Alerts from calendars are Nixe Calendar's. While Evolution's own
+//! Alerts from calendars are Nyx Calendar's. While Evolution's own
 //! `evolution-alarm-notify` runs, nothing is shown, so alerts aren't doubled.
 
 mod notify;
 mod tasks;
 
 use chrono::{Duration, Local};
-use nixe_eds::{Calendar, Kind, Registry, Reminders, View, Watch};
-use nixe_reminders_core::{ListInfo, Task};
+use nyx_eds::{Calendar, Kind, Registry, Reminders, View, Watch};
+use nyx_reminders_core::{ListInfo, Task};
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::rc::Rc;
 
-const BUS_NAME: &str = "io.github.design_nexus.nixe.RemindersEngine";
+const BUS_NAME: &str = "io.github.design_nexus.nyx.RemindersEngine";
 const SNOOZE_MINUTES: i64 = 10;
 
-const USAGE: &str = "Usage: nixe-remindersd [--write-tasks]\n\
+const USAGE: &str = "Usage: nyx-remindersd [--write-tasks]\n\
 \n\
   Shows reminder alerts as notifications and keeps tasks.sqlite current.\n\
   --write-tasks   write tasks.sqlite once and exit\n";
@@ -38,7 +38,7 @@ thread_local! {
 }
 
 fn main() {
-    nixe_core::app::init(nixe_core::app::App { slug: "nixe-reminders", name: "Reminders" });
+    nyx_core::app::init(nyx_core::app::App { slug: "nyx-reminders", name: "Reminders" });
     let args: Vec<String> = std::env::args().collect();
     if args.iter().any(|a| a == "--help" || a == "-h") {
         print!("{USAGE}");
@@ -52,7 +52,7 @@ fn main() {
         match result {
             Ok(n) => println!("{n} open tasks in {}", tasks_path().display()),
             Err(e) => {
-                eprintln!("nixe-remindersd: {e}");
+                eprintln!("nyx-remindersd: {e}");
                 std::process::exit(1);
             }
         }
@@ -68,7 +68,7 @@ fn main() {
         |_, _| {},
         |_, _| start(),
         move |_, _| {
-            eprintln!("nixe-remindersd: already running");
+            eprintln!("nyx-remindersd: already running");
             quit.quit();
         },
     );
@@ -76,7 +76,7 @@ fn main() {
 }
 
 fn tasks_path() -> std::path::PathBuf {
-    nixe_core::paths::data_dir().join("tasks.sqlite")
+    nyx_core::paths::data_dir().join("tasks.sqlite")
 }
 
 fn start() {
@@ -89,7 +89,7 @@ fn start() {
                 if notify::other_notifier_running() {
                     return;
                 }
-                // Calendars' alerts are Nixe Calendar's to show.
+                // Calendars' alerts are Nyx Calendar's to show.
                 let tasks_only = |source: &str| {
                     STATE.with(|s| s.borrow().registry.as_ref().is_some_and(|r| r.source(source, Kind::TaskList).is_some()))
                 };
@@ -110,7 +110,7 @@ fn start() {
             });
         }
         Err(err) => {
-            eprintln!("nixe-remindersd: {err}; trying again in 30 s");
+            eprintln!("nyx-remindersd: {err}; trying again in 30 s");
             glib::timeout_add_seconds_local_once(30, start);
         }
     }
@@ -141,7 +141,7 @@ pub fn complete(list: &str, uid: &str) {
         state.open[list].complete(uid).map_err(|e| e.to_string())
     });
     if let Err(e) = result {
-        eprintln!("nixe-remindersd: couldn't complete the task: {e}");
+        eprintln!("nyx-remindersd: couldn't complete the task: {e}");
     }
 }
 
@@ -152,7 +152,7 @@ fn schedule() {
     glib::timeout_add_seconds_local_once(2, || {
         PENDING.with(|p| p.set(false));
         if let Err(e) = write_tasks() {
-            eprintln!("nixe-remindersd: tasks: {e}");
+            eprintln!("nyx-remindersd: tasks: {e}");
         }
     });
 }
@@ -175,7 +175,7 @@ fn write_tasks() -> Result<usize, String> {
                         state.open.insert(src.uid.clone(), open);
                     }
                     Err(e) => {
-                        eprintln!("nixe-remindersd: {}: {e}", src.label());
+                        eprintln!("nyx-remindersd: {}: {e}", src.label());
                         continue;
                     }
                 }
@@ -198,7 +198,7 @@ fn write_tasks() -> Result<usize, String> {
         }
         (lists, all)
     });
-    let flags = nixe_reminders_core::Sidecar::open(&nixe_core::paths::data_dir().join("reminders.sqlite"))
+    let flags = nyx_reminders_core::Sidecar::open(&nyx_core::paths::data_dir().join("reminders.sqlite"))
         .and_then(|s| s.all())
         .unwrap_or_default();
     let now = Local::now().naive_local();

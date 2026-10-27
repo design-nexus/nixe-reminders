@@ -1,16 +1,16 @@
-//! Tasks, smart lists and local metadata for Nixe Reminders. No GTK.
+//! Tasks, smart lists and local metadata for Nyx Reminders. No GTK.
 //!
-//! Tasks live in Evolution Data Server task lists (VTODO) through `nixe-eds`.
+//! Tasks live in Evolution Data Server task lists (VTODO) through `nyx-eds`.
 //! What VTODO can't hold (flagged, manual order, a link back to a Mail message)
 //! is kept in a small sidecar database, keyed by list and task uid.
 
 mod sidecar;
 
-pub use nixe_eds::When;
+pub use nyx_eds::When;
 pub use sidecar::{Meta, Sidecar};
 
 use chrono::{DateTime, Datelike, Local, NaiveDate, NaiveDateTime, TimeZone};
-use nixe_eds::Item;
+use nyx_eds::Item;
 use std::collections::HashMap;
 
 /// What a list's backend can store (EDS capabilities and known limits).
@@ -393,7 +393,7 @@ mod tests {
     #[test]
     fn reads_items() {
         let item = Item {
-            kind: nixe_eds::ItemKind::Task,
+            kind: nyx_eds::ItemKind::Task,
             uid: "u".into(),
             rid: None,
             summary: " ".into(),
@@ -402,7 +402,7 @@ mod tests {
             start: None,
             end: None,
             due: Some(When::Date { year: 2026, month: 10, day: 30 }),
-            status: nixe_eds::Status::NeedsAction,
+            status: nyx_eds::Status::NeedsAction,
             completed: None,
             priority: Some(1),
             url: None,

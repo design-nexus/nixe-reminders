@@ -1,10 +1,10 @@
 [Unit]
-Description=Nixe Reminders alerts
+Description=Nyx Reminders alerts
 After=graphical-session.target
 PartOf=graphical-session.target
 
 [Service]
-ExecStart=%h/.local/bin/nixe-remindersd
+ExecStart=%h/.local/bin/nyx-remindersd
 Restart=on-failure
 UMask=0077
 LimitCORE=0

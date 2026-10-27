@@ -1,25 +1,25 @@
 # Reminders plan
 
-Nixe Reminders: lists of things to do, with due dates, alerts, repeats and subtasks,
+Nyx Reminders: lists of things to do, with due dates, alerts, repeats and subtasks,
 kept in Evolution Data Server task lists. That covers Google Tasks, CalDAV task lists
 (Nextcloud, Fastmail, iCloud) and lists on this computer. Shared foundation:
-[nixe-core docs/pim](https://github.com/design-nexus/nixe-core/blob/main/docs/pim/ARCHITECTURE.md).
+[nyx-core docs/pim](https://github.com/design-nexus/nyx-core/blob/main/docs/pim/ARCHITECTURE.md).
 
 | | |
 | --- | --- |
-| Packages | `nixe-reminders` (UI), `nixe-remindersd` (due alerts), `nixe-reminders-glimpse` |
-| App id | `io.github.design_nexus.nixe.Reminders` |
-| Data | EDS task lists (VTODO); `~/.local/share/nixe-reminders/reminders.sqlite` (sidecar), `tasks.sqlite` (read-only snapshot of open tasks for Glimpse) |
-| Config | `~/.config/nixe-reminders/settings.toml` |
+| Packages | `nyx-reminders` (UI), `nyx-remindersd` (due alerts), `nyx-reminders-glimpse` |
+| App id | `io.github.design_nexus.nyx.Reminders` |
+| Data | EDS task lists (VTODO); `~/.local/share/nyx-reminders/reminders.sqlite` (sidecar), `tasks.sqlite` (read-only snapshot of open tasks for Glimpse) |
+| Config | `~/.config/nyx-reminders/settings.toml` |
 
 ## Phases
 
 ### 1. MVP (done)
 - [x] Sidebar (Music construction): Today, Scheduled, Flagged, All, Completed, then task lists grouped by account
-- [x] List page: check off with Undo, quick add with `nixe-when` ("call Sam tomorrow at 9")
+- [x] List page: check off with Undo, quick add with `nyx-when` ("call Sam tomorrow at 9")
 - [x] Detail: due date and time, alert, repeat, priority, notes, URL, subtasks, flag
 - [x] Controls a list's backend can't store are hidden for that list; quick add says what it dropped
-- [x] `nixe-remindersd`: due alerts through `EReminderWatcher` (task lists only), notifications with Complete / Snooze / Dismiss, `tasks.sqlite`
+- [x] `nyx-remindersd`: due alerts through `EReminderWatcher` (task lists only), notifications with Complete / Snooze / Dismiss, `tasks.sqlite`
 - [x] Completing a repeating task moves it to its next due date
 - [x] Search; offline (EDS queue); banners as in Calendar
 - [x] Control tools for Assistant (and Mail's "Remind me" via `reminders.create` with `source`)

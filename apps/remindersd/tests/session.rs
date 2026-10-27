@@ -1,10 +1,10 @@
 //! End to end on a private session bus with scratch XDG directories (run through
 //! tools/test-remindersd.sh): a task due in 20 seconds with an alert goes into
-//! EDS's local task list, nixe-remindersd runs, this test plays the desktop's
+//! EDS's local task list, nyx-remindersd runs, this test plays the desktop's
 //! notification server, presses Complete, and checks the task is done.
 
 use gio::prelude::*;
-use nixe_eds::{Calendar, Draft, Kind, Registry, Scope, When};
+use nyx_eds::{Calendar, Draft, Kind, Registry, Scope, When};
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::{Duration, Instant};
@@ -35,7 +35,7 @@ fn pump(until: Instant, mut done: impl FnMut() -> bool) -> bool {
 #[test]
 #[ignore]
 fn due_task_alert_can_be_completed_from_the_notification() {
-    assert!(std::env::var("NIXE_EDS_SCRATCH").is_ok(), "run through tools/test-remindersd.sh");
+    assert!(std::env::var("NYX_EDS_SCRATCH").is_ok(), "run through tools/test-remindersd.sh");
     let conn = gio::bus_get_sync(gio::BusType::Session, gio::Cancellable::NONE).unwrap();
     let seen: Shown = Rc::default();
     let info = gio::DBusNodeInfo::for_xml(NODE).unwrap().lookup_interface("org.freedesktop.Notifications").unwrap();
@@ -75,7 +75,7 @@ fn due_task_alert_can_be_completed_from_the_notification() {
         })
         .unwrap();
 
-    let mut daemon = std::process::Command::new(env!("CARGO_BIN_EXE_nixe-remindersd")).spawn().unwrap();
+    let mut daemon = std::process::Command::new(env!("CARGO_BIN_EXE_nyx-remindersd")).spawn().unwrap();
     let notified = pump(Instant::now() + Duration::from_secs(90), || !seen.borrow().is_empty());
     assert!(notified, "a notification was asked for");
     {
@@ -94,7 +94,7 @@ fn due_task_alert_can_be_completed_from_the_notification() {
     )
     .unwrap();
     let done = pump(Instant::now() + Duration::from_secs(15), || list.get(&uid, None).is_ok_and(|t| t.is_done()));
-    let tasks_file = std::path::PathBuf::from(std::env::var("XDG_DATA_HOME").unwrap()).join("nixe-reminders/tasks.sqlite");
+    let tasks_file = std::path::PathBuf::from(std::env::var("XDG_DATA_HOME").unwrap()).join("nyx-reminders/tasks.sqlite");
     let wrote = tasks_file.exists();
     let _ = daemon.kill();
     let _ = daemon.wait();

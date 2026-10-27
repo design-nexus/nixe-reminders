@@ -13,7 +13,7 @@
 //! ```
 
 use chrono::NaiveDateTime;
-use nixe_reminders_core::{Due, ListInfo, Meta, Task, timestamp};
+use nyx_reminders_core::{Due, ListInfo, Meta, Task, timestamp};
 use rusqlite::{Connection, params};
 use std::collections::HashMap;
 use std::path::Path;
@@ -104,7 +104,7 @@ mod tests {
 
     #[test]
     fn writes_open_tasks() {
-        let dir = std::env::temp_dir().join(format!("nixe-remindersd-test-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("nyx-remindersd-test-{}", std::process::id()));
         let path = dir.join("tasks.sqlite");
         let d = |day| NaiveDate::from_ymd_opt(2026, 10, day).unwrap();
         let now = d(21).and_hms_opt(12, 0, 0).unwrap();

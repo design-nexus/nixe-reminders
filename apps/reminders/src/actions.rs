@@ -5,8 +5,8 @@ use crate::prefs;
 use crate::window;
 use crate::worker;
 use chrono::{Local, NaiveDateTime, NaiveTime};
-use nixe_eds::{Draft, Scope};
-use nixe_reminders_core::{Caps, Due, Task};
+use nyx_eds::{Draft, Scope};
+use nyx_reminders_core::{Caps, Due, Task};
 
 /// What a quick-add line says, fitted to what the list can keep.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -21,9 +21,9 @@ pub struct Quick {
 }
 
 pub fn parse_quick(text: &str, now: NaiveDateTime, caps: Caps, default_day: Option<chrono::NaiveDate>) -> Quick {
-    let (text, mut tags) = nixe_reminders_core::hashtags(text);
+    let (text, mut tags) = nyx_reminders_core::hashtags(text);
     let text = text.as_str();
-    let parse = nixe_when::parse(text, now);
+    let parse = nyx_when::parse(text, now);
     let mut dropped = Vec::new();
     if !tags.is_empty() && !caps.tags {
         tags.clear();

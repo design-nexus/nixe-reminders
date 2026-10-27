@@ -2,8 +2,8 @@
   "application": "reminders",
   "directory": "reminders",
   "packages": [
-    "nixe-reminders",
-    "nixe-remindersd"
+    "nyx-reminders",
+    "nyx-remindersd"
   ],
   "manifest": "Cargo.toml",
   "prepare": [],
@@ -14,11 +14,11 @@
       "test",
       "--locked",
       "-p",
-      "nixe-reminders-core",
+      "nyx-reminders-core",
       "-p",
-      "nixe-reminders",
+      "nyx-reminders",
       "-p",
-      "nixe-remindersd"
+      "nyx-remindersd"
     ]
   ]
 }
