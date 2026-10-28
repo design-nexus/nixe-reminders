@@ -324,6 +324,7 @@ fn rebuild_page() {
         )
     };
     ui.borrow().title.set_text(&title_text);
+    ui.borrow().title.set_visible(!title_text.is_empty());
     chrome::set_title(&ui.borrow().window, "Reminders", &title_text);
     let can_add = {
         let u = ui.borrow();
@@ -333,7 +334,7 @@ fn rebuild_page() {
             Page::Smart(_) => u.lists.iter().any(|l| !l.read_only),
         }
     };
-    quick.set_visible(can_add);
+    quick.set_sensitive(can_add);
 
     while let Some(child) = rows.first_child() {
         rows.remove(&child);
@@ -1000,49 +1001,49 @@ fn build(app: &gtk::Application) {
         .vexpand(true)
         .child(&nav_list)
         .build();
-    let head = chrome::sidebar_head("Reminders", Some("Find reminders (Ctrl+F)"));
-    head.toggle.connect_clicked(|_| toggle_sidebar());
-    nav.append(&head.root);
-    nav.append(&nav_scroll);
-
+    // The sidebar's top: finding reminders, and its toggle (centred on the narrow rail).
+    let nav_top = gtk::Box::new(gtk::Orientation::Horizontal, 6);
+    nav_top.add_css_class("nav-top");
     let search = gtk::SearchEntry::new();
-    search.set_placeholder_text(Some("Find reminders"));
+    search.set_placeholder_text(Some("Find reminders  (Ctrl+F)"));
     search.update_property(&[gtk::accessible::Property::Label("Find reminders")]);
-    search.set_visible(false);
+    search.add_css_class("sidebar-search");
+    search.add_css_class("compact-hide");
+    search.set_hexpand(true);
+    nav_top.append(&search);
+    let collapse = nyx_ui::widgets::bar_button("sidebar-show-symbolic", "Collapse the sidebar (Ctrl+B)");
+    collapse.add_css_class("nav-toggle");
+    collapse.connect_clicked(|_| toggle_sidebar());
+    nav_top.append(&collapse);
+    nav.append(&nav_top);
+    nav.append(&nav_scroll);
     search.connect_search_changed(|_| refresh_page());
-    search.connect_stop_search(|entry| {
-        entry.set_text("");
-        entry.set_visible(false);
-    });
-    if let Some(find) = &head.search {
-        let entry = search.clone();
-        find.connect_clicked(move |_| {
-            if entry.is_visible() && entry.text().is_empty() {
-                entry.set_visible(false);
-            } else {
-                entry.set_visible(true);
-                entry.grab_focus();
-            }
-        });
-    }
+    search.connect_stop_search(|entry| entry.set_text(""));
+
+    // The sidebar's foot: what's shown and whether it's current, and Refresh.
+    let nav_foot = gtk::Box::new(gtk::Orientation::Horizontal, 6);
+    nav_foot.add_css_class("nav-foot");
+    let readout = widgets::label("", "status-readout");
+    readout.set_ellipsize(gtk::pango::EllipsizeMode::End);
+    readout.set_hexpand(true);
+    readout.set_xalign(0.0);
+    readout.add_css_class("compact-hide");
+    STATUS.with(|s| *s.borrow_mut() = Some(readout.clone()));
+    nav_foot.append(&readout);
+    let reload = nyx_ui::widgets::bar_button("view-refresh-symbolic", "Refresh (R)");
+    reload.connect_clicked(|_| refresh());
+    nav_foot.append(&reload);
+    nav.append(&nav_foot);
 
     let banners = gtk::Box::new(gtk::Orientation::Vertical, 8);
     banners.add_css_class("banners");
     banners.set_visible(false);
 
-    let bar = gtk::Box::new(gtk::Orientation::Horizontal, 6);
-    bar.add_css_class("toolbar");
-    let title = widgets::label("", "toolbar-title");
-    title.set_hexpand(true);
-    title.set_xalign(0.0);
-    title.set_ellipsize(gtk::pango::EllipsizeMode::End);
-    bar.append(&title);
-    let reload = widgets::icon_button("view-refresh-symbolic", "Refresh (R)");
-    reload.connect_clicked(|_| refresh());
-    bar.append(&reload);
-
+    // Quick add sits in the header; what it understood shows over the list.
     let quick = gtk::Entry::new();
     quick.add_css_class("quick-add");
+    quick.add_css_class("bar-search");
+    quick.set_width_chars(36);
     quick.set_placeholder_text(Some("Add a reminder — “Call Sam tomorrow at 9”"));
     quick.update_property(&[gtk::accessible::Property::Label("Add a reminder")]);
     quick.set_primary_icon_name(Some("list-add-symbolic"));
@@ -1079,7 +1080,6 @@ fn build(app: &gtk::Application) {
     });
     let quick_box = gtk::Box::new(gtk::Orientation::Vertical, 4);
     quick_box.add_css_class("quick-box");
-    quick_box.append(&quick);
     quick_box.append(&quick_note);
 
     let rows = gtk::Box::new(gtk::Orientation::Vertical, 0);
@@ -1103,6 +1103,7 @@ fn build(app: &gtk::Application) {
         .width_request(detail::WIDTH)
         .build();
     detail_scroll.add_css_class("detail-scroll");
+    detail_scroll.add_css_class("inspector");
     detail_scroll.set_hexpand(false);
     detail_scroll.set_visible(false);
     let split = gtk::Box::new(gtk::Orientation::Horizontal, 0);
@@ -1112,9 +1113,7 @@ fn build(app: &gtk::Application) {
     let content = gtk::Box::new(gtk::Orientation::Vertical, 0);
     content.add_css_class("settings-content");
     content.set_hexpand(true);
-    content.append(&chrome::search_strip(&search));
     content.append(&banners);
-    content.append(&bar);
     content.append(&split);
 
     let body = gtk::Box::new(gtk::Orientation::Horizontal, 0);
@@ -1122,10 +1121,16 @@ fn build(app: &gtk::Application) {
     body.append(&nav);
     body.append(&content);
 
+    // The header: the app with the page as its subtitle, quick add, and Settings.
+    let header = nyx_ui::chrome::app_header(&window, "checkbox-checked-symbolic", "Reminders");
+    header.center.append(&quick);
+    header.end.append(&nyx_ui::chrome::settings_button(settings_dialog::open));
+    let title = header.subtitle.clone();
+
     let frame = gtk::Box::new(gtk::Orientation::Vertical, 0);
     frame.add_css_class("window-frame");
+    frame.append(&header.root);
     frame.append(&body);
-    frame.append(&status_bar());
 
     let overlay = gtk::Overlay::new();
     overlay.set_child(Some(&frame));
@@ -1202,33 +1207,17 @@ fn build(app: &gtk::Application) {
     redraw();
 }
 
-fn status_bar() -> gtk::Box {
-    let bar = gtk::Box::new(gtk::Orientation::Horizontal, 16);
-    bar.add_css_class("status-bar");
-    bar.append(&chrome::shortcuts_button(show_shortcuts));
-    let spacer = gtk::Box::new(gtk::Orientation::Horizontal, 0);
-    spacer.set_hexpand(true);
-    bar.append(&spacer);
-    let readout = widgets::label("", "status-readout");
-    readout.set_ellipsize(gtk::pango::EllipsizeMode::Start);
-    STATUS.with(|s| *s.borrow_mut() = Some(readout.clone()));
-    bar.append(&readout);
-    let gear = chrome::gear(settings_dialog::open);
-    gear.update_property(&[gtk::accessible::Property::Label("Settings")]);
-    bar.append(&gear);
-    bar
-}
-
 fn apply_compact(nav: &gtk::Box, compact: bool) {
-    if let Some(head) = nav.first_child().and_downcast::<gtk::Box>() {
-        chrome::set_head_compact(&head, compact);
-    }
     if compact {
         nav.add_css_class("compact");
     } else {
         nav.remove_css_class("compact");
     }
     fn walk(widget: &gtk::Widget, compact: bool) {
+        if widget.has_css_class("nav-toggle") {
+            widget.set_hexpand(compact);
+            widget.set_halign(if compact { gtk::Align::Center } else { gtk::Align::End });
+        }
         if widget.has_css_class("compact-hide") {
             widget.set_visible(!compact);
         }
@@ -1266,7 +1255,6 @@ fn install_keys(window: &gtk::ApplicationWindow, search: &gtk::SearchEntry, quic
         if ctrl {
             match key {
                 gdk::Key::f => {
-                    search.set_visible(true);
                     search.grab_focus();
                 }
                 gdk::Key::b => toggle_sidebar(),
@@ -1282,9 +1270,8 @@ fn install_keys(window: &gtk::ApplicationWindow, search: &gtk::SearchEntry, quic
                 gtk::prelude::GtkWindowExt::set_focus(&win, None::<&gtk::Widget>);
                 return glib::Propagation::Stop;
             }
-            if search.is_visible() {
+            if !search.text().is_empty() {
                 search.set_text("");
-                search.set_visible(false);
                 return glib::Propagation::Stop;
             }
             if selected_task().is_some() {
@@ -1334,7 +1321,6 @@ fn install_keys(window: &gtk::ApplicationWindow, search: &gtk::SearchEntry, quic
             gdk::Key::_4 => show_page(Page::Smart(Smart::All)),
             gdk::Key::r => refresh(),
             gdk::Key::slash => {
-                search.set_visible(true);
                 search.grab_focus();
             }
             gdk::Key::F1 => show_shortcuts(),
