@@ -16,7 +16,12 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 const BUS_NAME: &str = "io.github.design_nexus.nyx.RemindersEngine";
-const SNOOZE_MINUTES: i64 = 10;
+pub fn snooze_minutes() -> i64 {
+    std::fs::read_to_string(nyx_core::paths::prefs_file()).ok()
+        .and_then(|text| text.parse::<toml::Table>().ok())
+        .and_then(|table| table.get("snooze_minutes")?.as_integer())
+        .filter(|n| [5, 10, 15, 30].contains(n)).unwrap_or(10)
+}
 
 const USAGE: &str = "Usage: nyx-remindersd [--write-tasks]\n\
 \n\
@@ -125,7 +130,7 @@ pub fn with_reminders(f: impl FnOnce(&Reminders)) {
 }
 
 pub fn snooze_until() -> i64 {
-    (Local::now() + Duration::minutes(SNOOZE_MINUTES)).timestamp()
+    (Local::now() + Duration::minutes(snooze_minutes())).timestamp()
 }
 
 /// Completes a task from a notification.

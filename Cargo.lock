@@ -741,6 +741,7 @@ dependencies = [
  "nyx-eds",
  "nyx-reminders-core",
  "rusqlite",
+ "toml",
 ]
 
 [[package]]

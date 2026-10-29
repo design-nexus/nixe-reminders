@@ -10,6 +10,7 @@ pub struct Prefs {
     pub mode: ThemeMode,
     pub theme: String,
     pub reduce_motion: bool,
+    pub snooze_minutes: i64,
     pub sidebar_collapsed: bool,
     pub glow: bool,
     /// The page shown last: a smart list id or `list:<uid>`.
@@ -34,6 +35,7 @@ impl Default for Prefs {
             mode: ThemeMode::Omarchy,
             theme: "tokyo-night".into(),
             reduce_motion: false,
+            snooze_minutes: 10,
             sidebar_collapsed: false,
             glow: true,
             last_section: "today".into(),

@@ -83,7 +83,7 @@ impl Notifier {
         let summary =
             if reminder.item.summary.trim().is_empty() { "Untitled".to_string() } else { reminder.item.summary.clone() };
         let body = body(&reminder, Local::now().timestamp());
-        let actions: Vec<String> = ["default", "Open", "complete", "Complete", "snooze", "Snooze 10 min", "dismiss", "Dismiss"]
+        let actions: Vec<String> = ["default", "Open", "complete", "Complete", "snooze", &format!("Snooze {} min", crate::snooze_minutes()), "dismiss", "Dismiss"]
             .iter()
             .map(|s| s.to_string())
             .collect();

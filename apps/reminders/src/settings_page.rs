@@ -48,6 +48,10 @@ fn alerts(page: &Page) {
     let group = page.group("Alerts");
     group.note("For new reminders, in lists that keep alerts. Change one reminder's alert in its details.");
     let prefs = prefs::get();
+    let (row, _) = widgets::choice_row("Snooze length", "How long Snooze postpones a reminder notification.",
+        widgets::opts(&[("5", "5 minutes"), ("10", "10 minutes"), ("15", "15 minutes"), ("30", "30 minutes")]),
+        &prefs.snooze_minutes.to_string(), |id| { prefs::update(|p| p.snooze_minutes = id.parse().unwrap_or(10)); prefs::flush(); });
+    group.add(&row);
     let mut timed = vec![("none".to_string(), "None".to_string())];
     timed.extend(
         [
